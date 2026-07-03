@@ -1460,34 +1460,40 @@ function LogTab({ data, update }) {
         </div>
 
         {/* --- Pause Timer Chips --- */}
-        <div className="ig-pause-chips">
-          {[30, 60, 90, 120, 180].map((s) => (
-            <button
-              key={s}
-              className={
-                "ig-pause-chip" +
-                (data.settings?.autoRest &&
-                (data.settings?.restSeconds || 90) === s
-                  ? " active"
-                  : "")
-              }
-              onClick={() => {
-                const isActive =
-                  data.settings?.autoRest &&
-                  (data.settings?.restSeconds || 90) === s;
-                update((prev) => ({
-                  ...prev,
-                  settings: {
-                    ...prev.settings,
-                    autoRest: isActive ? false : true,
-                    restSeconds: s,
-                  },
-                }));
-              }}
-            >
-              {s < 60 ? `${s}s` : `${s / 60}min`}
-            </button>
-          ))}
+        <div className="ig-pause-box">
+          <div className="ig-pause-label">
+            <TimerIcon size={12} />
+            <span>Pause</span>
+          </div>
+          <div className="ig-pause-chips">
+            {[30, 60, 90, 120, 180].map((s) => (
+              <button
+                key={s}
+                className={
+                  "ig-pause-chip" +
+                  (data.settings?.autoRest &&
+                  (data.settings?.restSeconds || 90) === s
+                    ? " active"
+                    : "")
+                }
+                onClick={() => {
+                  const isActive =
+                    data.settings?.autoRest &&
+                    (data.settings?.restSeconds || 90) === s;
+                  update((prev) => ({
+                    ...prev,
+                    settings: {
+                      ...prev.settings,
+                      autoRest: isActive ? false : true,
+                      restSeconds: s,
+                    },
+                  }));
+                }}
+              >
+                {s < 60 ? `${s}s` : `${s / 60}min`}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -2508,14 +2514,13 @@ function Style() {
       .ig-btn-primary.wide { width: 100%; }
       .ig-btn-primary.lg { height: 60px; width: 60px; border-radius: 50%; padding: 0; }
 
-      .ig-toggle-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--chalk-dim); cursor: pointer; }
-      .ig-toggle-row input { accent-color: var(--plate-yellow); width: 16px; height: 16px; }
-
-      /* --- Pause Timer Chips --- */
+      /* --- Pause Timer Box --- */
+      .ig-pause-box { display: flex; align-items: center; gap: 10px; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; }
+      .ig-pause-label { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--chalk-dim); font-weight: 500; flex-shrink: 0; }
       .ig-pause-chips { display: flex; gap: 4px; flex-wrap: wrap; }
-      .ig-pause-chip { font-size: 11px; padding: 4px 8px; border-radius: 999px; border: 1.5px solid var(--grid); background: transparent; color: var(--chalk-dim); cursor: pointer; font-family: inherit; transition: all 0.15s; line-height: 1; }
+      .ig-pause-chip { font-size: 11px; padding: 4px 9px; border-radius: 999px; border: 1.5px solid var(--grid); background: transparent; color: var(--chalk-dim); cursor: pointer; font-family: inherit; transition: all 0.15s; line-height: 1.3; }
       .ig-pause-chip:hover { border-color: var(--plate-gray); color: var(--chalk); }
-      .ig-pause-chip.active { background: var(--plate-yellow); border-color: var(--plate-yellow); color: #201a08; font-weight: 600; }
+      .ig-pause-chip.active { background: var(--plate-yellow); border-color: var(--plate-yellow); color: #201a08; font-weight: 600; box-shadow: 0 0 8px rgba(227,178,60,0.3); }
 
       .ig-last-card { gap: 8px; }
       .ig-last-sets { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -2556,9 +2561,6 @@ function Style() {
       .ig-btn-log:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
       .ig-btn-log-icon { font-size: 18px; line-height: 1; }
       .ig-btn-log-label { font-size: 10px; font-weight: 600; text-align: center; line-height: 1.2; }
-
-      /* --- Toggles row --- */
-      .ig-toggles { display: flex; gap: 16px; }
 
       /* --- Today's sets --- */
       .ig-today-sets { display: flex; flex-direction: column; gap: 5px; }
