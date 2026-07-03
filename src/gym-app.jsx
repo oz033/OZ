@@ -27,6 +27,8 @@ import {
   Scale,
   Volume2,
   VolumeX,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -844,32 +846,70 @@ function InlineRestTimer({ seconds, onDone, onCancel, soundOn = true }) {
 }
 
 /* ---------------- Streak Calendar ---------------- */
-function StreakCalendar({ logDates, today, onClose }) {
-  const days = 49; // 7 weeks
-  const todayDate = new Date(today + "T00:00:00");
+function StreakCalendar({ logs, today, onClose }) {
+  const [monthOffset, setMonthOffset] = useState(0);
+  const [selectedDate, setSelectedDate] = useState(null);
 
-  // Generate last 49 days
-  const cells = Array.from({ length: days }, (_, i) => {
-    const d = new Date(todayDate);
-    d.setDate(d.getDate() - (days - 1 - i));
-    const dateStr = d.toISOString().slice(0, 10);
-    const trained = logDates.has(dateStr);
+  const now = new Date(today + "T00:00:00");
+  now.setMonth(now.getMonth() + monthOffset);
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  const monthNames = [
+    "Januar",
+    "Februar",
+    "März",
+    "April",
+    "Mai",
+    "Juni",
+    "Juli",
+    "August",
+    "September",
+    "Oktober",
+    "November",
+    "Dezember",
+  ];
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startPad = (firstDay.getDay() + 6) % 7; // 0=Mon
+  const daysInMonth = lastDay.getDate();
+
+  // Build cells
+  const cells = [];
+  for (let i = 0; i < startPad; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const dayLogs = logs.filter((l) => l.date === dateStr);
     const isToday = dateStr === today;
-    const weekday = (d.getDay() + 6) % 7; // 0=Mon ... 6=Sun
-    return { date: dateStr, trained, isToday, weekday, day: d.getDate() };
-  });
-
-  // Current streak
-  let streak = 0;
-  for (let i = cells.length - 1; i >= 0; i--) {
-    if (cells[i].trained) streak++;
-    else if (!cells[i].isToday) break;
+    cells.push({
+      date: dateStr,
+      day: d,
+      trained: dayLogs.length > 0,
+      dayLogs,
+      isToday,
+    });
   }
 
-  // Best streak (from logs sorted by date)
+  const selectedLogs = selectedDate
+    ? logs.filter((l) => l.date === selectedDate)
+    : [];
+
+  // Streak calculation (current + best)
+  const logDates = new Set(logs.map((l) => l.date));
+  let streak = 0;
+  const d = new Date(today + "T00:00:00");
+  while (true) {
+    const ds = d.toISOString().slice(0, 10);
+    if (logDates.has(ds)) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    } else break;
+  }
+
   const sortedDates = [...logDates].sort();
-  let bestStreak = 0;
-  let cur = 0;
+  let bestStreak = 0,
+    cur = 0;
   for (let i = 0; i < sortedDates.length; i++) {
     if (i === 0) {
       cur = 1;
@@ -877,40 +917,13 @@ function StreakCalendar({ logDates, today, onClose }) {
     }
     const prev = new Date(sortedDates[i - 1] + "T00:00:00");
     const curr = new Date(sortedDates[i] + "T00:00:00");
-    const diff = (curr - prev) / 86400000;
-    if (diff === 1) cur++;
+    if ((curr - prev) / 86400000 === 1) cur++;
     else {
       bestStreak = Math.max(bestStreak, cur);
       cur = 1;
     }
   }
   bestStreak = Math.max(bestStreak, cur);
-
-  // Group by week
-  const weeks = [];
-  let week = [];
-  cells.forEach((c, i) => {
-    week.push(c);
-    if (week.length === 7 || i === cells.length - 1) {
-      weeks.push(week);
-      week = [];
-    }
-  });
-
-  const monthLabels = [
-    "Jan",
-    "Feb",
-    "Mär",
-    "Apr",
-    "Mai",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Okt",
-    "Nov",
-    "Dez",
-  ];
 
   return (
     <div className="ig-streak-card">
@@ -924,6 +937,7 @@ function StreakCalendar({ logDates, today, onClose }) {
           <X size={14} />
         </button>
       </div>
+
       <div className="ig-streak-stats">
         <div className="ig-streak-stat">
           <span className="ig-streak-num">{streak}</span>
@@ -938,41 +952,89 @@ function StreakCalendar({ logDates, today, onClose }) {
           <span className="ig-streak-label">Tage gesamt</span>
         </div>
       </div>
-      <div className="ig-streak-grid-wrap">
-        <div className="ig-streak-days">
-          <span>Mo</span>
-          <span>Mi</span>
-          <span>Fr</span>
-        </div>
-        <div className="ig-streak-grid">
-          {weeks.map((w, wi) => (
-            <div key={wi} className="ig-streak-week">
-              {Array.from({ length: 7 }, (_, di) => {
-                const c = w[di];
-                if (!c)
-                  return <div key={di} className="ig-streak-cell empty" />;
-                return (
-                  <div
-                    key={di}
-                    className={
-                      "ig-streak-cell" +
-                      (c.trained ? " trained" : "") +
-                      (c.isToday ? " today" : "")
-                    }
-                    title={`${c.date}: ${c.trained ? "Trainiert" : "Ruhetag"}`}
-                  />
-                );
-              })}
-            </div>
-          ))}
-        </div>
+
+      {/* Month navigation */}
+      <div className="ig-cal-month-nav">
+        <button
+          className="ig-icon-btn ghost"
+          onClick={() => setMonthOffset((o) => o - 1)}
+          aria-label="Vorheriger Monat"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <span className="ig-cal-month-label">
+          {monthNames[month]} {year}
+        </span>
+        <button
+          className="ig-icon-btn ghost"
+          onClick={() => setMonthOffset((o) => o + 1)}
+          aria-label="Nächster Monat"
+        >
+          <ChevronRight size={16} />
+        </button>
       </div>
-      <div className="ig-streak-legend">
-        <span>Weniger</span>
-        <div className="ig-streak-cell" />
-        <div className="ig-streak-cell trained" />
-        <span>Mehr</span>
+
+      {/* Calendar grid */}
+      <div className="ig-cal-grid">
+        {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((wd) => (
+          <div key={wd} className="ig-cal-wd">
+            {wd}
+          </div>
+        ))}
+        {cells.map((c, i) => {
+          if (!c) return <div key={`e${i}`} className="ig-cal-cell empty" />;
+          return (
+            <button
+              key={c.date}
+              className={
+                "ig-cal-cell" +
+                (c.trained ? " trained" : "") +
+                (c.isToday ? " today" : "") +
+                (selectedDate === c.date ? " selected" : "")
+              }
+              onClick={() =>
+                setSelectedDate(selectedDate === c.date ? null : c.date)
+              }
+            >
+              <span className="ig-cal-day">{c.day}</span>
+              {c.trained && <span className="ig-cal-dot" />}
+            </button>
+          );
+        })}
       </div>
+
+      {/* Selected day details */}
+      {selectedDate && (
+        <div className="ig-cal-detail">
+          {selectedLogs.length === 0 ? (
+            <p className="ig-empty">Keine Übungen an diesem Tag</p>
+          ) : (
+            selectedLogs.map((l) => (
+              <div key={l.id || l.exercise} className="ig-cal-ex-row">
+                <span className="ig-cal-ex-name">{l.exercise}</span>
+                <div className="ig-cal-sets-row">
+                  {l.sets.map((s, si) => (
+                    <span key={si} className="ig-badge dim mono">
+                      {s.reps} × {s.weight} kg
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+          <div className="ig-cal-vol">
+            Volumen:{" "}
+            {Math.round(
+              selectedLogs.reduce(
+                (v, l) =>
+                  v + l.sets.reduce((sv, s) => sv + s.reps * s.weight, 0),
+                0,
+              ),
+            )}{" "}
+            kg
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1183,7 +1245,7 @@ function LogTab({ data, update }) {
 
       {showStreak && (
         <StreakCalendar
-          logDates={logDates}
+          logs={data.logs}
           today={today}
           onClose={() => setShowStreak(false)}
         />
@@ -2393,16 +2455,26 @@ function Style() {
       .ig-streak-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
       .ig-streak-num { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--plate-green); }
       .ig-streak-label { font-size: 10px; color: var(--chalk-dim); text-transform: uppercase; letter-spacing: 0.5px; }
-      .ig-streak-grid-wrap { display: flex; gap: 8px; }
-      .ig-streak-days { display: flex; flex-direction: column; justify-content: space-around; font-size: 9px; color: var(--chalk-dim); min-width: 18px; text-align: right; padding-right: 4px; }
-      .ig-streak-grid { display: flex; gap: 3px; }
-      .ig-streak-week { display: flex; flex-direction: column; gap: 3px; }
-      .ig-streak-cell { width: 14px; height: 14px; border-radius: 3px; background: var(--surface-3); }
-      .ig-streak-cell.trained { background: var(--plate-green); opacity: 0.8; }
-      .ig-streak-cell.today { outline: 2px solid var(--plate-yellow); outline-offset: 1px; }
-      .ig-streak-cell.empty { background: transparent; }
-      .ig-streak-legend { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--chalk-dim); justify-content: flex-end; }
-      .ig-streak-legend .ig-streak-cell { width: 10px; height: 10px; }
+      .ig-cal-month-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .ig-cal-month-label { font-size: 14px; font-weight: 600; color: var(--chalk); }
+      .ig-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+      .ig-cal-wd { text-align: center; font-size: 10px; color: var(--chalk-dim); padding: 4px 0; font-weight: 500; }
+      .ig-cal-cell { position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: transparent; border: none; cursor: pointer; font-family: inherit; padding: 0; transition: all 0.1s; }
+      .ig-cal-cell:hover { background: var(--surface-3); }
+      .ig-cal-cell.empty { pointer-events: none; }
+      .ig-cal-cell.trained { background: color-mix(in srgb, var(--plate-green) 15%, transparent); }
+      .ig-cal-cell.trained:hover { background: color-mix(in srgb, var(--plate-green) 25%, transparent); }
+      .ig-cal-cell.today { outline: 2px solid var(--plate-yellow); outline-offset: 1px; z-index: 1; }
+      .ig-cal-cell.selected { background: var(--plate-green) !important; }
+      .ig-cal-cell.selected .ig-cal-day { color: var(--bg); font-weight: 700; }
+      .ig-cal-day { font-size: 13px; color: var(--chalk); font-family: 'JetBrains Mono', monospace; }
+      .ig-cal-dot { position: absolute; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--plate-green); }
+      .ig-cal-cell.selected .ig-cal-dot { background: var(--bg); }
+      .ig-cal-detail { display: flex; flex-direction: column; gap: 8px; background: var(--surface-3); border-radius: 8px; padding: 10px; }
+      .ig-cal-ex-row { display: flex; flex-direction: column; gap: 4px; }
+      .ig-cal-ex-name { font-size: 13px; font-weight: 600; color: var(--chalk); }
+      .ig-cal-sets-row { display: flex; gap: 4px; flex-wrap: wrap; }
+      .ig-cal-vol { font-size: 11px; color: var(--chalk-dim); font-weight: 500; text-align: right; padding-top: 4px; border-top: 1px solid var(--grid); }
       @keyframes fadeSlide { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
       .ig-preset-list { display: flex; flex-direction: column; gap: 8px; }
