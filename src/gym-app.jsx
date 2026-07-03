@@ -1459,44 +1459,36 @@ function LogTab({ data, update }) {
           </button>
         </div>
 
-        {/* --- Toggles --- */}
-        <div className="ig-toggles">
-          <label className="ig-toggle-row">
-            <input
-              type="checkbox"
-              checked={!!data.settings?.autoRest}
-              onChange={(e) =>
+        {/* --- Pause Timer Chips --- */}
+        <div className="ig-pause-chips">
+          {[30, 60, 90, 120, 180].map((s) => (
+            <button
+              key={s}
+              className={
+                "ig-pause-chip" +
+                (data.settings?.autoRest &&
+                (data.settings?.restSeconds || 90) === s
+                  ? " active"
+                  : "")
+              }
+              onClick={() => {
+                const isActive =
+                  data.settings?.autoRest &&
+                  (data.settings?.restSeconds || 90) === s;
                 update((prev) => ({
                   ...prev,
-                  settings: { ...prev.settings, autoRest: e.target.checked },
-                }))
-              }
-            />
-            <span>Pause ({data.settings?.restSeconds || 90}s)</span>
-          </label>
+                  settings: {
+                    ...prev.settings,
+                    autoRest: isActive ? false : true,
+                    restSeconds: s,
+                  },
+                }));
+              }}
+            >
+              {s < 60 ? `${s}s` : `${s / 60}min`}
+            </button>
+          ))}
         </div>
-
-        {data.settings?.autoRest && (
-          <div className="ig-preset-row" style={{ marginTop: 0 }}>
-            {[30, 60, 90, 120, 180].map((s) => (
-              <button
-                key={s}
-                className={
-                  "ig-chip" +
-                  ((data.settings?.restSeconds || 90) === s ? " active" : "")
-                }
-                onClick={() =>
-                  update((prev) => ({
-                    ...prev,
-                    settings: { ...prev.settings, restSeconds: s },
-                  }))
-                }
-              >
-                {s < 60 ? `${s}s` : `${s / 60} min`}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* --- Today's sets card --- */}
@@ -2518,6 +2510,12 @@ function Style() {
 
       .ig-toggle-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--chalk-dim); cursor: pointer; }
       .ig-toggle-row input { accent-color: var(--plate-yellow); width: 16px; height: 16px; }
+
+      /* --- Pause Timer Chips --- */
+      .ig-pause-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+      .ig-pause-chip { font-size: 11px; padding: 4px 8px; border-radius: 999px; border: 1.5px solid var(--grid); background: transparent; color: var(--chalk-dim); cursor: pointer; font-family: inherit; transition: all 0.15s; line-height: 1; }
+      .ig-pause-chip:hover { border-color: var(--plate-gray); color: var(--chalk); }
+      .ig-pause-chip.active { background: var(--plate-yellow); border-color: var(--plate-yellow); color: #201a08; font-weight: 600; }
 
       .ig-last-card { gap: 8px; }
       .ig-last-sets { display: flex; gap: 6px; flex-wrap: wrap; }
