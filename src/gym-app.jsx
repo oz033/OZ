@@ -258,6 +258,38 @@ function playSound(type, enabled = true) {
   }
 }
 
+/* ---------------- Animierte Zahlen (Count-up) ---------------- */
+const REDUCED_MOTION =
+  typeof window !== "undefined" &&
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+function CountUp({ value, format = (v) => Math.round(v), duration = 750 }) {
+  const [display, setDisplay] = useState(REDUCED_MOTION ? value : 0);
+  const displayRef = useRef(REDUCED_MOTION ? value : 0);
+  useEffect(() => {
+    if (REDUCED_MOTION) {
+      displayRef.current = value;
+      setDisplay(value);
+      return;
+    }
+    const from = displayRef.current;
+    if (from === value) return;
+    const start = performance.now();
+    let raf;
+    const tick = (t) => {
+      const p = Math.min(1, (t - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const next = from + (value - from) * eased;
+      displayRef.current = next;
+      setDisplay(next);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration]);
+  return <>{format(display)}</>;
+}
+
 function buzz(pattern, enabled = true) {
   if (enabled && navigator.vibrate) navigator.vibrate(pattern);
 }
@@ -1282,7 +1314,9 @@ function DashboardTab({ data, goTo }) {
       <div className="ig-dash-grid">
         <div className="ig-card ig-dash-stat">
           <Flame size={16} className="ig-dash-icon" />
-          <span className="ig-dash-num mono">{stats.streakWeeks}</span>
+          <span className="ig-dash-num mono">
+            <CountUp value={stats.streakWeeks} />
+          </span>
           <span className="ig-dash-label">
             {stats.streakWeeks === 0
               ? "Starte deine Serie!"
@@ -1317,9 +1351,14 @@ function DashboardTab({ data, goTo }) {
         <div className="ig-card ig-dash-stat">
           <Scale size={16} className="ig-dash-icon" />
           <span className="ig-dash-num mono">
-            {todayVolume >= 1000
-              ? `${round1(todayVolume / 1000)}t`
-              : `${Math.round(todayVolume)}`}
+            <CountUp
+              value={todayVolume}
+              format={(v) =>
+                todayVolume >= 1000
+                  ? `${round1(v / 1000)}t`
+                  : `${Math.round(v)}`
+              }
+            />
           </span>
           <span className="ig-dash-label">
             {todayVolume >= 1000 ? "Volumen heute" : "kg heute"}
@@ -1327,7 +1366,9 @@ function DashboardTab({ data, goTo }) {
         </div>
         <div className="ig-card ig-dash-stat">
           <Trophy size={16} className="ig-dash-icon" />
-          <span className="ig-dash-num mono">{stats.prCount}</span>
+          <span className="ig-dash-num mono">
+            <CountUp value={stats.prCount} />
+          </span>
           <span className="ig-dash-label">Rekorde</span>
         </div>
       </div>
@@ -1933,13 +1974,23 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
             <div className="ig-card ig-dash-stat">
               <Scale size={16} className="ig-dash-icon" />
               <span className="ig-dash-num mono">
-                {Math.round(s.volume)} kg
+                <CountUp
+                  value={s.volume}
+                  duration={1100}
+                  format={(v) => `${Math.round(v)} kg`}
+                />
               </span>
               <span className="ig-dash-label">Volumen</span>
             </div>
             <div className="ig-card ig-dash-stat">
               <Zap size={16} className="ig-dash-icon" />
-              <span className="ig-dash-num mono">+{xp}</span>
+              <span className="ig-dash-num mono">
+                <CountUp
+                  value={xp}
+                  duration={1100}
+                  format={(v) => `+${Math.round(v)}`}
+                />
+              </span>
               <span className="ig-dash-label">XP</span>
             </div>
             <div className="ig-card ig-dash-stat">
@@ -2503,30 +2554,43 @@ function ProgressTab({ data }) {
       <div className="ig-dash-grid">
         <div className="ig-card ig-dash-stat">
           <CalendarDays size={16} className="ig-dash-icon" />
-          <span className="ig-dash-num mono">{stats.totalWorkouts}</span>
+          <span className="ig-dash-num mono">
+            <CountUp value={stats.totalWorkouts} />
+          </span>
           <span className="ig-dash-label">Einheiten</span>
         </div>
         <div className="ig-card ig-dash-stat">
           <Scale size={16} className="ig-dash-icon" />
           <span className="ig-dash-num mono">
-            {stats.totalVolume >= 1000
-              ? `${round1(stats.totalVolume / 1000)}t`
-              : Math.round(stats.totalVolume)}
+            <CountUp
+              value={stats.totalVolume}
+              format={(v) =>
+                stats.totalVolume >= 1000
+                  ? `${round1(v / 1000)}t`
+                  : Math.round(v)
+              }
+            />
           </span>
           <span className="ig-dash-label">Gesamtvolumen</span>
         </div>
         <div className="ig-card ig-dash-stat">
           <Dumbbell size={16} className="ig-dash-icon" />
           <span className="ig-dash-num mono">
-            {stats.totalWorkouts
-              ? Math.round(stats.totalSets / stats.totalWorkouts)
-              : 0}
+            <CountUp
+              value={
+                stats.totalWorkouts
+                  ? Math.round(stats.totalSets / stats.totalWorkouts)
+                  : 0
+              }
+            />
           </span>
           <span className="ig-dash-label">Ø Sätze/Einheit</span>
         </div>
         <div className="ig-card ig-dash-stat">
           <Trophy size={16} className="ig-dash-icon" />
-          <span className="ig-dash-num mono">{stats.prCount}</span>
+          <span className="ig-dash-num mono">
+            <CountUp value={stats.prCount} />
+          </span>
           <span className="ig-dash-label">Rekorde</span>
         </div>
       </div>
@@ -3150,9 +3214,13 @@ function Style() {
       .ig-tabbar { position: sticky; bottom: 0; display: flex; background: rgba(26, 29, 36, 0.78); backdrop-filter: blur(24px) saturate(1.5); -webkit-backdrop-filter: blur(24px) saturate(1.5); border-top: 1px solid var(--glass-border); padding: 6px 2px calc(env(safe-area-inset-bottom, 0px) + 6px); }
       .ig-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; color: var(--chalk-dim); font-family: inherit; font-size: 10px; padding: 5px 0 3px; cursor: pointer; letter-spacing: 0.2px; transition: color 0.2s var(--ease-out), transform 0.15s var(--ease-out); }
       .ig-tab.active { color: var(--plate-yellow); }
-      .ig-tab svg { transition: transform 0.2s var(--ease-spring); }
-      .ig-tab.active svg { transform: scale(1.08); }
-      .ig-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; backdrop-filter: blur(var(--glass-blur)) saturate(1.3); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.3); box-shadow: 0 1px 3px rgba(0,0,0,0.3); animation: ig-fade-up 0.45s var(--ease-out); }
+      .ig-tab svg { transition: transform 0.25s var(--ease-spring); }
+      @keyframes ig-tab-bounce { 0% { transform: scale(1); } 45% { transform: scale(1.25); } 100% { transform: scale(1.08); } }
+      .ig-tab.active svg { transform: scale(1.08); animation: ig-tab-bounce 0.35s var(--ease-spring); }
+      .ig-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; backdrop-filter: blur(var(--glass-blur)) saturate(1.3); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.3); box-shadow: 0 1px 3px rgba(0,0,0,0.3); animation: ig-fade-up 0.45s var(--ease-out); transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out); }
+      @media (hover: hover) {
+        .ig-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
+      }
       .ig-field-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--chalk-dim); font-weight: 600; }
       .ig-empty { font-size: 13px; color: var(--chalk-dim); margin: 0; line-height: 1.5; }
 
@@ -3270,7 +3338,8 @@ function Style() {
       .ig-set-progress { display: flex; align-items: center; gap: 5px; flex-shrink: 0; padding-top: 2px; }
       .ig-progress-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
       .ig-prog-dot { width: 14px; height: 14px; border-radius: 50%; background: rgba(35, 39, 48, 0.5); border: 2px solid var(--glass-border); transition: all 0.35s var(--ease-spring); }
-      .ig-prog-dot.done { background: var(--plate-green); border-color: var(--plate-green); box-shadow: 0 0 6px rgba(88,164,92,0.4); transform: scale(1.1); }
+      @keyframes ig-dot-pop { 0% { transform: scale(0.6); } 55% { transform: scale(1.35); } 100% { transform: scale(1.1); } }
+      .ig-prog-dot.done { background: var(--plate-green); border-color: var(--plate-green); box-shadow: 0 0 6px rgba(88,164,92,0.4); transform: scale(1.1); animation: ig-dot-pop 0.4s var(--ease-spring); }
       .ig-prog-dot.next { border-color: var(--plate-yellow); box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.2); }
       .ig-prog-text { font-size: 11px; font-weight: 600; color: var(--chalk-dim); font-family: 'JetBrains Mono', monospace; margin-left: 2px; }
       .ig-ex-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
@@ -3296,14 +3365,15 @@ function Style() {
       .ig-level-badge { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: var(--plate-yellow); }
       .ig-level-xp { font-size: 11px; color: var(--chalk-dim); }
       .ig-level-track { height: 8px; background: rgba(35,39,48,0.7); border-radius: 4px; overflow: hidden; }
-      .ig-level-fill { height: 100%; background: linear-gradient(90deg, var(--plate-yellow), #f0d27a); border-radius: 4px; transition: width 0.6s var(--ease-out); box-shadow: 0 0 8px rgba(var(--accent-rgb),0.4); }
+      .ig-level-fill { height: 100%; background: linear-gradient(90deg, var(--plate-yellow), #f0d27a); border-radius: 4px; transition: width 0.6s var(--ease-out); box-shadow: 0 0 8px rgba(var(--accent-rgb),0.4); transform-origin: left; animation: ig-fill-in 0.9s var(--ease-out); }
       .ig-dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
       .ig-dash-stat { align-items: flex-start; gap: 4px; padding: 14px; }
       .ig-dash-icon { color: var(--plate-yellow); }
       .ig-dash-num { font-size: 24px; font-weight: 700; color: var(--chalk); line-height: 1.1; }
       .ig-dash-label { font-size: 11px; color: var(--chalk-dim); }
       .ig-mini-track { width: 100%; height: 5px; background: rgba(35,39,48,0.7); border-radius: 3px; overflow: hidden; margin-top: 4px; }
-      .ig-mini-fill { height: 100%; background: var(--plate-yellow); border-radius: 3px; transition: width 0.5s var(--ease-out); }
+      .ig-mini-fill { height: 100%; background: var(--plate-yellow); border-radius: 3px; transition: width 0.5s var(--ease-out); transform-origin: left; animation: ig-fill-in 0.8s var(--ease-out); }
+      @keyframes ig-fill-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
       .ig-hero-row { flex-direction: row; align-items: center; justify-content: space-between; padding: 14px 16px; gap: 10px; }
       .ig-hero-sil { display: flex; flex-direction: column; align-items: center; gap: 4px; max-width: 90px; }
@@ -3347,6 +3417,8 @@ function Style() {
       .ig-queue-meta { font-size: 11px; color: var(--chalk-dim); }
       .ig-queue-vol { font-size: 12px; color: var(--chalk-dim); }
       .ig-btn-primary.xl { height: 56px; font-size: 15.5px; border-radius: 16px; gap: 8px; }
+      @keyframes ig-cta-glow { 0%, 100% { box-shadow: 0 2px 10px rgba(var(--accent-rgb),0.2); } 50% { box-shadow: 0 5px 24px rgba(var(--accent-rgb),0.45); } }
+      .ig-btn-primary.xl:not(:disabled) { animation: ig-cta-glow 2.8s ease-in-out infinite; }
 
       /* --- Fullscreen Workout Mode --- */
       .ig-wo { position: fixed; inset: 0; z-index: 60; background: var(--bg); display: flex; flex-direction: column; max-width: 430px; margin: 0 auto; overflow: hidden; animation: ig-fade-up 0.3s var(--ease-out); }
