@@ -21,6 +21,7 @@ import {
   Minus,
   Trophy,
   History,
+  Search,
   Scale,
   Volume2,
   VolumeX,
@@ -171,6 +172,180 @@ const EXERCISE_META = {
 
 const DEFAULT_EXERCISES = Object.keys(EXERCISE_META);
 
+/* ---------------- Übungsbibliothek & Trainingspläne ---------------- */
+const MUSCLE_GROUPS = [
+  { id: "chest", name: "Brust", zone: "chest" },
+  { id: "shoulders", name: "Schultern", zone: "shoulders" },
+  { id: "back", name: "Rücken", zone: "back" },
+  { id: "biceps", name: "Bizeps", zone: "arms" },
+  { id: "triceps", name: "Trizeps", zone: "arms" },
+  { id: "legs", name: "Beine", zone: "legs" },
+  { id: "core", name: "Core", zone: "abs" },
+];
+const MUSCLE_NAME = Object.fromEntries(MUSCLE_GROUPS.map((m) => [m.id, m.name]));
+const MUSCLE_ZONE = Object.fromEntries(MUSCLE_GROUPS.map((m) => [m.id, m.zone]));
+
+const META_MUSCLE = {
+  Shoulderpress: "shoulders",
+  Chestpress: "chest",
+  Pulldown: "back",
+  "Low Row": "back",
+  "Lower Back": "back",
+  "Arm Extension": "triceps",
+  "Arm Curl": "biceps",
+  "Leg Press": "legs",
+  "Leg Extension": "legs",
+  "Leg Curl": "legs",
+  Adductor: "legs",
+  Abductor: "legs",
+  "Abdominal Crunch": "core",
+};
+
+const LIBRARY_DEFAULT = [
+  // Die 13 Geräte-Übungen (Namen = bestehende Trainingshistorie)
+  ...Object.entries(EXERCISE_META).map(([name, m]) => ({
+    id: "lib-" + name.toLowerCase().replace(/\s+/g, "-"),
+    name,
+    muscle: META_MUSCLE[name],
+    zone: m.zone,
+    zone2: m.zone2 || null,
+    equipment: "Maschine",
+    hint: m.hint !== "Selbsterklärend" ? m.hint : "",
+    nr: m.nr,
+  })),
+  // Standard-Bibliothek
+  { id: "lib-bench-press", name: "Bench Press", muscle: "chest", zone: "chest", zone2: "arms", equipment: "Langhantel" },
+  { id: "lib-incline-bench", name: "Incline Bench Press", muscle: "chest", zone: "chest", zone2: "shoulders", equipment: "Langhantel" },
+  { id: "lib-cable-fly", name: "Cable Fly", muscle: "chest", zone: "chest", zone2: null, equipment: "Kabelzug" },
+  { id: "lib-db-press", name: "Dumbbell Press", muscle: "chest", zone: "chest", zone2: "arms", equipment: "Kurzhantel" },
+  { id: "lib-shoulder-press-db", name: "Shoulder Press (Kurzhantel)", muscle: "shoulders", zone: "shoulders", zone2: "arms", equipment: "Kurzhantel" },
+  { id: "lib-lateral-raise", name: "Lateral Raise", muscle: "shoulders", zone: "shoulders", zone2: null, equipment: "Kurzhantel" },
+  { id: "lib-front-raise", name: "Front Raise", muscle: "shoulders", zone: "shoulders", zone2: null, equipment: "Kurzhantel" },
+  { id: "lib-rear-delt-fly", name: "Rear Delt Fly", muscle: "shoulders", zone: "shoulders", zone2: "back", equipment: "Maschine" },
+  { id: "lib-pull-up", name: "Pull Up", muscle: "back", zone: "back", zone2: "arms", equipment: "Körpergewicht" },
+  { id: "lib-seated-row", name: "Seated Row", muscle: "back", zone: "back", zone2: "arms", equipment: "Kabelzug" },
+  { id: "lib-deadlift", name: "Deadlift", muscle: "back", zone: "back", zone2: "legs", equipment: "Langhantel" },
+  { id: "lib-barbell-curl", name: "Barbell Curl", muscle: "biceps", zone: "arms", zone2: null, equipment: "Langhantel" },
+  { id: "lib-db-curl", name: "Dumbbell Curl", muscle: "biceps", zone: "arms", zone2: null, equipment: "Kurzhantel" },
+  { id: "lib-hammer-curl", name: "Hammer Curl", muscle: "biceps", zone: "arms", zone2: null, equipment: "Kurzhantel" },
+  { id: "lib-cable-curl", name: "Cable Curl", muscle: "biceps", zone: "arms", zone2: null, equipment: "Kabelzug" },
+  { id: "lib-pushdown", name: "Triceps Pushdown", muscle: "triceps", zone: "arms", zone2: null, equipment: "Kabelzug" },
+  { id: "lib-overhead-ext", name: "Overhead Extension", muscle: "triceps", zone: "arms", zone2: null, equipment: "Kurzhantel" },
+  { id: "lib-skull-crusher", name: "Skull Crusher", muscle: "triceps", zone: "arms", zone2: null, equipment: "SZ-Stange" },
+  { id: "lib-squat", name: "Squat", muscle: "legs", zone: "legs", zone2: "abs", equipment: "Langhantel" },
+  { id: "lib-rdl", name: "Romanian Deadlift", muscle: "legs", zone: "legs", zone2: "back", equipment: "Langhantel" },
+  { id: "lib-calf-raise", name: "Calf Raise", muscle: "legs", zone: "legs", zone2: null, equipment: "Maschine" },
+  { id: "lib-lunges", name: "Lunges", muscle: "legs", zone: "legs", zone2: "abs", equipment: "Kurzhantel" },
+  { id: "lib-crunch", name: "Crunch", muscle: "core", zone: "abs", zone2: null, equipment: "Körpergewicht" },
+  { id: "lib-plank", name: "Plank", muscle: "core", zone: "abs", zone2: "shoulders", equipment: "Körpergewicht" },
+  { id: "lib-leg-raise", name: "Hanging Leg Raise", muscle: "core", zone: "abs", zone2: null, equipment: "Körpergewicht" },
+];
+
+const PLAN_COLORS = ["#e3b23c", "#c8f04a", "#4aa8f0", "#f0654a", "#b06af0", "#4af0c8"];
+const PLAN_ICONS = ["💪", "🏋️", "🦵", "🔥", "⚡", "🎯", "🏃", "🧗"];
+
+const uid = () =>
+  Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+// Heutiger Plan: per Wochentag zugewiesen, sonst aktiver Plan
+function getTodayPlan(data) {
+  const plans = data.plans || [];
+  const key = todayKey();
+  return (
+    plans.find((p) => (p.days || []).includes(key)) ||
+    plans.find((p) => p.id === data.activePlanId) ||
+    plans[0] ||
+    null
+  );
+}
+
+function isRestDay(data) {
+  const plans = data.plans || [];
+  const anyScheduled = plans.some((p) => (p.days || []).length > 0);
+  if (!anyScheduled) return false;
+  return !plans.some((p) => (p.days || []).includes(todayKey()));
+}
+
+function nextTrainingDay(data) {
+  const plans = (data.plans || []).filter((p) => (p.days || []).length > 0);
+  if (!plans.length) return null;
+  const order = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  const now = new Date(todayISO() + "T00:00:00");
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() + i);
+    const key = order[d.getDay()];
+    const plan = plans.find((p) => p.days.includes(key));
+    if (plan) return { days: i, plan, date: d };
+  }
+  return null;
+}
+
+// Migration: altes Split-System -> dynamische Pläne
+function migrateToPlans(parsed, settings) {
+  if (parsed.plans && parsed.library) return parsed;
+  const library = LIBRARY_DEFAULT.map((e) => ({ ...e }));
+  (parsed.exercises || []).forEach((name) => {
+    if (!library.some((l) => l.name === name)) {
+      library.push({
+        id: "custom-" + uid(),
+        name,
+        muscle: null,
+        zone: null,
+        zone2: null,
+        equipment: "",
+        custom: true,
+      });
+    }
+  });
+  const rest = settings?.restSeconds || 90;
+  const byGroup = (group) =>
+    Object.entries(EXERCISE_META)
+      .filter(([, m]) => m.group === group)
+      .sort((a, b) => (a[1].order || 99) - (b[1].order || 99))
+      .map(([name, m]) => ({
+        exerciseId: library.find((l) => l.name === name)?.id,
+        sets: 3,
+        reps: m.reps === "6–10" ? 8 : 10,
+        weight: null,
+        rest,
+      }));
+  const okPlan = {
+    id: "plan-" + uid(),
+    name: "Oberkörper",
+    color: PLAN_COLORS[0],
+    icon: "💪",
+    description: "",
+    days: [],
+    exercises: byGroup("Oberkörper"),
+  };
+  const ukPlan = {
+    id: "plan-" + uid(),
+    name: "Unterkörper",
+    color: PLAN_COLORS[2],
+    icon: "🦵",
+    description: "",
+    days: [],
+    exercises: byGroup("Unterkörper"),
+  };
+  const split = parsed.split;
+  if (split?.mode === "week" && split.days) {
+    Object.entries(split.days).forEach(([day, unit]) => {
+      if (unit === "ok") okPlan.days.push(day);
+      else if (unit === "uk") ukPlan.days.push(day);
+      else if (unit === "gk") {
+        okPlan.days.push(day);
+      }
+    });
+  }
+  return {
+    ...parsed,
+    library,
+    plans: [okPlan, ukPlan],
+    activePlanId: okPlan.id,
+  };
+}
+
 const WEEKDAYS = [
   { key: "mon", label: "Montag", short: "Mo" },
   { key: "tue", label: "Dienstag", short: "Di" },
@@ -180,13 +355,6 @@ const WEEKDAYS = [
   { key: "sat", label: "Samstag", short: "Sa" },
   { key: "sun", label: "Sonntag", short: "So" },
 ];
-
-const UNIT_LABEL = {
-  rest: "Ruhetag",
-  ok: "Oberkörper",
-  uk: "Unterkörper",
-  gk: "Ganzkörper",
-};
 
 const EMPTY_DAYS = {
   mon: "rest",
@@ -390,55 +558,6 @@ const BADGE_DEFS = [
   { id: "s4", name: "Ein Monat", desc: "4 Wochen Serie", icon: "🔥", check: (s) => s.streakWeeks >= 4 },
   { id: "s12", name: "Ein Quartal", desc: "12 Wochen Serie", icon: "⚡", check: (s) => s.streakWeeks >= 12 },
 ];
-
-function normalizeSplit(s) {
-  if (!s) return { ...DEFAULT_SPLIT };
-  if (s.mode) {
-    return {
-      mode: s.mode,
-      days: { ...EMPTY_DAYS, ...(s.days || {}) },
-      interval: { every: 2, unit: "ok", anchor: null, ...(s.interval || {}) },
-    };
-  }
-  return { ...DEFAULT_SPLIT, days: { ...EMPTY_DAYS, ...s } };
-}
-
-function getTodayUnit(split) {
-  const s = normalizeSplit(split);
-  if (s.mode === "interval") {
-    if (!s.interval.anchor) return "rest";
-    const anchor = new Date(s.interval.anchor + "T00:00:00");
-    const now = new Date(todayISO() + "T00:00:00");
-    const diff = Math.round((now - anchor) / 86400000);
-    if (diff < 0) return "rest";
-    return diff % s.interval.every === 0 ? s.interval.unit : "rest";
-  }
-  return s.days[todayKey()] || "rest";
-}
-
-function getUnitForDate(split, date) {
-  const s = normalizeSplit(split);
-  if (s.mode === "interval") {
-    if (!s.interval.anchor) return "rest";
-    const anchor = new Date(s.interval.anchor + "T00:00:00");
-    const diff = Math.round((date - anchor) / 86400000);
-    if (diff < 0) return "rest";
-    return diff % s.interval.every === 0 ? s.interval.unit : "rest";
-  }
-  const key = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][date.getDay()];
-  return s.days[key] || "rest";
-}
-
-function daysUntilNextTraining(split) {
-  const now = new Date(todayISO() + "T00:00:00");
-  for (let i = 1; i <= 14; i++) {
-    const d = new Date(now);
-    d.setDate(now.getDate() + i);
-    const unit = getUnitForDate(split, d);
-    if (unit !== "rest") return { days: i, unit };
-  }
-  return null;
-}
 
 const SPLIT_PRESETS = [
   {
@@ -793,27 +912,32 @@ function Onboarding({ profile, onFinish }) {
 /* ---------------- App shell ---------------- */
 export default function App() {
   const [loaded, setLoaded] = useState(false);
-  const [data, setData] = useState({
-    exercises: DEFAULT_EXERCISES,
-    logs: [],
-    profile: {
-      heightCm: "",
-      weightKg: "",
-      weightLog: [],
-      gender: null,
-      age: "",
-      onboarded: false,
-    },
-    split: { ...DEFAULT_SPLIT },
-    settings: {
-      autoRest: true,
-      restSeconds: 90,
-      sound: true,
-      haptics: true,
-      weeklyGoal: 3,
-      accent: "gold",
-    },
-  });
+  const [data, setData] = useState(() =>
+    migrateToPlans(
+      {
+        exercises: DEFAULT_EXERCISES,
+        logs: [],
+        profile: {
+          heightCm: "",
+          weightKg: "",
+          weightLog: [],
+          gender: null,
+          age: "",
+          onboarded: false,
+        },
+        split: { ...DEFAULT_SPLIT },
+        settings: {
+          autoRest: true,
+          restSeconds: 90,
+          sound: true,
+          haptics: true,
+          weeklyGoal: 3,
+          accent: "gold",
+        },
+      },
+      { restSeconds: 90 },
+    ),
+  );
   const [tab, setTab] = useState("home");
   const saveTimer = useRef(null);
 
@@ -823,15 +947,29 @@ export default function App() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
+          const settings = {
+            autoRest: true,
+            restSeconds: 90,
+            sound: true,
+            haptics: true,
+            weeklyGoal: 3,
+            accent: "gold",
+            ...(parsed.settings || {}),
+          };
+          const migrated = migrateToPlans(parsed, settings);
+          if (!parsed.plans) {
+            try {
+              localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({ ...migrated, settings }),
+              );
+            } catch (e) {
+              /* egal */
+            }
+          }
           setData((prev) => ({
             ...prev,
-            ...parsed,
-            exercises: [
-              ...DEFAULT_EXERCISES,
-              ...(parsed.exercises || []).filter(
-                (e) => !DEFAULT_EXERCISES.includes(e),
-              ),
-            ],
+            ...migrated,
             profile: {
               heightCm: "",
               weightKg: "",
@@ -839,18 +977,9 @@ export default function App() {
               gender: null,
               age: "",
               onboarded: false,
-              ...(parsed.profile || {}),
+              ...(migrated.profile || {}),
             },
-            split: normalizeSplit(parsed.split),
-            settings: {
-              autoRest: true,
-              restSeconds: 90,
-              sound: true,
-              haptics: true,
-              weeklyGoal: 3,
-              accent: "gold",
-              ...(parsed.settings || {}),
-            },
+            settings,
           }));
         }
       } catch (e) {
@@ -985,7 +1114,7 @@ export default function App() {
           {tab === "workout" && (
             <LogTab data={data} update={update} goTo={goTo} />
           )}
-          {tab === "plan" && <PlanTab data={data} update={update} />}
+          {tab === "plan" && <PlansTab data={data} update={update} />}
           {tab === "progress" && <ProgressTab data={data} />}
           {tab === "profile" && <BmiTab data={data} update={update} />}
         </main>
@@ -1240,9 +1369,17 @@ function DashboardTab({ data, goTo }) {
     () => calcStats(data.logs, data.settings?.weeklyGoal || 3),
     [data.logs, data.settings?.weeklyGoal],
   );
-  const todayUnit = getTodayUnit(data.split);
+  const plan = getTodayPlan(data);
+  const restDay = isRestDay(data);
   const today = todayISO();
   const todayVolume = stats.dayVolumes[today] || 0;
+  const planByIdName = useMemo(() => {
+    const m = {};
+    (data.library || []).forEach((e) => {
+      m[e.id] = e.name;
+    });
+    return m;
+  }, [data.library]);
   const weeklyGoal = data.settings?.weeklyGoal || 3;
   const hour = new Date().getHours();
   const greeting =
@@ -1280,11 +1417,13 @@ function DashboardTab({ data, goTo }) {
         <span className="ig-hero-plan">
           {trainedToday
             ? "Training erledigt — stark!"
-            : todayUnit === "rest"
+            : restDay
               ? "Heute ist Ruhetag. Regeneration zählt auch."
-              : `Heute laut Plan: ${UNIT_LABEL[todayUnit]}${todayUnit !== "gk" ? "-Einheit" : ""}`}
+              : plan
+                ? `Heute geplant: ${plan.icon} ${plan.name} · ${plan.exercises.length} Übungen`
+                : "Leg im Plan-Tab deinen ersten Trainingsplan an."}
         </span>
-        {todayUnit !== "rest" && !trainedToday && (
+        {!restDay && !trainedToday && plan && (
           <button className="ig-btn-primary wide" onClick={() => goTo("workout")}>
             <Play size={16} /> Training starten
           </button>
@@ -1295,6 +1434,27 @@ function DashboardTab({ data, goTo }) {
           </button>
         )}
       </div>
+
+      {plan && !trainedToday && !restDay && plan.exercises.length > 0 && (
+        <div className="ig-card">
+          <div className="ig-field-label">
+            {plan.icon} {plan.name} — heute geplant
+          </div>
+          <ol className="ig-today-plan">
+            {plan.exercises.map((it, i) => (
+              <li key={it.exerciseId + i}>
+                <span className="ig-today-plan-num mono">{i + 1}</span>
+                <span className="ig-today-plan-name">
+                  {planByIdName[it.exerciseId] || "?"}
+                </span>
+                <span className="ig-today-plan-meta mono">
+                  {it.sets} × {it.reps}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       <div className="ig-card ig-level-card">
         <div className="ig-level-head">
@@ -1434,33 +1594,35 @@ function DashboardTab({ data, goTo }) {
 
 /* ---------------- Home / Log tab ---------------- */
 function LogTab({ data, update, goTo }) {
-  const todayUnit = getTodayUnit(data.split);
   const today = todayISO();
   const [active, setActive] = useState(false);
   const [showStreak, setShowStreak] = useState(false);
 
+  const plan = getTodayPlan(data);
+  const restDay = isRestDay(data);
+
+  // Queue: Übungen des heutigen Plans inkl. individueller Vorgaben
   const queue = useMemo(() => {
-    const group =
-      todayUnit === "ok"
-        ? "Oberkörper"
-        : todayUnit === "uk"
-          ? "Unterkörper"
-          : null;
-    const meta = data.exercises.filter((e) => EXERCISE_META[e]);
-    const custom = data.exercises.filter((e) => !EXERCISE_META[e]);
-    const pick = group
-      ? meta.filter((e) => EXERCISE_META[e].group === group)
-      : meta;
-    return [
-      ...pick.sort(
-        (a, b) =>
-          (EXERCISE_META[a].group || "").localeCompare(
-            EXERCISE_META[b].group || "",
-          ) || (EXERCISE_META[a].order || 99) - (EXERCISE_META[b].order || 99),
-      ),
-      ...custom,
-    ];
-  }, [data.exercises, todayUnit]);
+    if (!plan) return [];
+    const byId = {};
+    (data.library || []).forEach((e) => {
+      byId[e.id] = e;
+    });
+    return plan.exercises
+      .map((item) => {
+        const entry = byId[item.exerciseId];
+        if (!entry) return null;
+        return {
+          name: entry.name,
+          sets: item.sets || 3,
+          reps: item.reps || 10,
+          weight: item.weight,
+          rest: item.rest ?? data.settings?.restSeconds ?? 90,
+          entry,
+        };
+      })
+      .filter(Boolean);
+  }, [plan, data.library, data.settings?.restSeconds]);
 
   const setsToday = useMemo(() => {
     const map = {};
@@ -1500,52 +1662,47 @@ function LogTab({ data, update, goTo }) {
   );
 
   const doneExercises = queue.filter(
-    (e) => (setsToday[e] || 0) >= WO_TARGET_SETS,
+    (it) => (setsToday[it.name] || 0) >= it.sets,
   ).length;
 
-  const restCountdown = useMemo(
-    () => daysUntilNextTraining(data.split),
-    [data.split],
-  );
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
-    if (todayUnit !== "rest") return;
+    if (!restDay) return;
     const iv = setInterval(() => setNowTick(Date.now()), 60000);
     return () => clearInterval(iv);
-  }, [todayUnit]);
+  }, [restDay]);
   const countdown = useMemo(() => {
-    if (todayUnit !== "rest" || !restCountdown) return null;
+    if (!restDay) return null;
+    const next = nextTrainingDay(data);
+    if (!next) return null;
     const target = new Date(today + "T00:00:00");
-    target.setDate(target.getDate() + restCountdown.days);
+    target.setDate(target.getDate() + next.days);
     const ms = target.getTime() - nowTick;
     if (ms <= 0) return null;
     const totalH = Math.floor(ms / 3600000);
     return {
       days: Math.floor(totalH / 24),
       hours: totalH % 24,
-      unit: restCountdown.unit,
+      planName: next.plan.name,
+      planIcon: next.plan.icon,
       weekday: target.toLocaleDateString("de-DE", { weekday: "long" }),
     };
-  }, [todayUnit, restCountdown, today, nowTick]);
+  }, [restDay, data, today, nowTick]);
 
   const soundOn = data.settings?.sound !== false;
   const hapticsOn = data.settings?.haptics !== false;
 
   return (
     <div className="ig-tabpane">
-      {todayUnit !== "rest" ? (
+      {!restDay && plan ? (
         <button
           className="ig-plan-banner"
           onClick={() => setShowStreak((s) => !s)}
           aria-expanded={showStreak}
         >
-          <CalendarDays size={16} />
+          <span className="ig-banner-icon">{plan.icon}</span>
           <span>
-            Heute laut Plan:{" "}
-            <strong>
-              {UNIT_LABEL[todayUnit]}
-              {todayUnit !== "gk" ? " Einheit" : ""}
-            </strong>
+            Heute: <strong>{plan.name}</strong>
           </span>
           <ChevronRight
             size={15}
@@ -1561,8 +1718,8 @@ function LogTab({ data, update, goTo }) {
           <Moon size={22} className="ig-rest-icon" />
           <div className="ig-rest-body">
             <span className="ig-rest-title">
-              Nächstes Training: {countdown.weekday} ·{" "}
-              {UNIT_LABEL[countdown.unit]}
+              Nächstes Training: {countdown.weekday} · {countdown.planIcon}{" "}
+              {countdown.planName}
             </span>
             <span className="ig-rest-count mono">
               {countdown.days > 0 &&
@@ -1585,12 +1742,18 @@ function LogTab({ data, update, goTo }) {
           aria-expanded={showStreak}
         >
           <Moon size={16} />
-          <span>Heute laut Plan: Ruhetag — Regeneration zählt auch.</span>
+          <span>Heute: Ruhetag — Regeneration zählt auch.</span>
           <ChevronRight
             size={15}
             className={"ig-banner-chev" + (showStreak ? " open" : "")}
           />
         </button>
+      )}
+
+      {restDay && plan && queue.length > 0 && (
+        <p className="ig-rest-hint">
+          Trotzdem Lust? Du kannst {plan.icon} {plan.name} auch heute starten.
+        </p>
       )}
 
       {showStreak && (
@@ -1612,12 +1775,12 @@ function LogTab({ data, update, goTo }) {
                 : `Heutiges Workout · ${queue.length} Übungen`}
         </div>
         <ul className="ig-queue-list">
-          {queue.map((e) => {
-            const done = (setsToday[e] || 0) >= WO_TARGET_SETS;
-            const partial = !done && (setsToday[e] || 0) > 0;
+          {queue.map((it, i) => {
+            const done = (setsToday[it.name] || 0) >= it.sets;
+            const partial = !done && (setsToday[it.name] || 0) > 0;
             return (
               <li
-                key={e}
+                key={it.name}
                 className={
                   "ig-queue-row" +
                   (done ? " done" : "") +
@@ -1625,14 +1788,14 @@ function LogTab({ data, update, goTo }) {
                 }
               >
                 <span className="ig-queue-dot">
-                  {done ? "✓" : partial ? "◐" : "○"}
+                  {done ? "✓" : partial ? "◐" : i + 1}
                 </span>
-                <span className="ig-queue-name">{e}</span>
-                {(sparkByExercise[e] || []).length >= 2 && (
-                  <Sparkline points={sparkByExercise[e]} w={54} h={20} />
+                <span className="ig-queue-name">{it.name}</span>
+                {(sparkByExercise[it.name] || []).length >= 2 && (
+                  <Sparkline points={sparkByExercise[it.name]} w={54} h={20} />
                 )}
                 <span className="ig-queue-meta mono">
-                  {setsToday[e] || 0}/{WO_TARGET_SETS}
+                  {setsToday[it.name] || 0}/{it.sets}
                 </span>
               </li>
             );
@@ -1668,6 +1831,12 @@ function LogTab({ data, update, goTo }) {
         </button>
       )}
 
+      {queue.length === 0 && (
+        <button className="ig-btn-primary wide ghosted" onClick={() => goTo && goTo("plan")}>
+          <Plus size={16} /> Plan mit Übungen füllen
+        </button>
+      )}
+
       {active && (
         <WorkoutMode
           data={data}
@@ -1685,8 +1854,6 @@ function LogTab({ data, update, goTo }) {
 }
 
 /* ---------------- Fullscreen Workout Mode ---------------- */
-const WO_TARGET_SETS = 3;
-
 const MOTIVATION_POOL = [
   "👏 Stark gemacht — weiter so.",
   "⚡ Perfektes Tempo.",
@@ -1699,6 +1866,13 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
   const soundOn = data.settings?.sound !== false;
   const hapticsOn = data.settings?.haptics !== false;
   const restSeconds = data.settings?.restSeconds || 90;
+  const itemDone = useCallback(
+    (it) =>
+      data.logs
+        .filter((l) => l.date === today && l.exercise === it.name)
+        .reduce((n, l) => n + l.sets.length, 0) >= it.sets,
+    [data.logs, today],
+  );
 
   const setsFor = useCallback(
     (ex) =>
@@ -1708,7 +1882,7 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
     [data.logs, today],
   );
 
-  const firstOpen = queue.findIndex((e) => setsFor(e) < WO_TARGET_SETS);
+  const firstOpen = queue.findIndex((it) => !itemDone(it));
   const [idx, setIdx] = useState(firstOpen === -1 ? 0 : firstOpen);
   const [phase, setPhase] = useState(
     firstOpen === -1 ? "done" : "lift",
@@ -1748,8 +1922,10 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
 
   const sessionRef = useRef({ sets: 0, volume: 0, prs: 0, records: [], zones: new Set() });
 
-  const exercise = queue[idx] || "";
-  const meta = EXERCISE_META[exercise];
+  const item = queue[idx] || null;
+  const exercise = item?.name || "";
+  const targetSets = item?.sets || 3;
+  const meta = item?.entry || {};
   const doneCount = setsFor(exercise);
   const isLast = idx === queue.length - 1;
 
@@ -1782,14 +1958,14 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
       setWeight(top.weight);
       setReps(top.reps);
     } else {
-      setWeight(20);
-      setReps(10);
+      setWeight(item?.weight || 20);
+      setReps(item?.reps || 10);
     }
   }, [exercise]); // eslint-disable-line
 
   const milestone = useMemo(() => {
-    if (doneCount > 0 && doneCount < WO_TARGET_SETS) {
-      const left = WO_TARGET_SETS - doneCount;
+    if (doneCount > 0 && doneCount < targetSets) {
+      const left = targetSets - doneCount;
       return `⚡ Noch ${left} ${left === 1 ? "Satz" : "Sätze"} bis Tagesziel`;
     }
     const current = Math.max(bestBefore, Number(weight) || 0);
@@ -1802,7 +1978,7 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
       return `🔥 Noch ${round1(next - current)} kg bis ${next} kg`;
     }
     return null;
-  }, [bestBefore, weight, doneCount]);
+  }, [bestBefore, weight, doneCount, targetSets]);
 
   const [feedback, setFeedback] = useState(null);
 
@@ -1811,15 +1987,13 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
 
   const advance = useCallback(() => {
     // Nach Pause: nächster Satz oder nächste offene Übung
-    const currentDone = setsFor(exercise) >= WO_TARGET_SETS;
+    const currentDone = item ? itemDone(item) : true;
     if (!currentDone) {
       setPhase("lift");
       return;
     }
-    const nextIdx = queue.findIndex(
-      (e, i) => i > idx && setsFor(e) < WO_TARGET_SETS,
-    );
-    const anyOpen = queue.findIndex((e) => setsFor(e) < WO_TARGET_SETS);
+    const nextIdx = queue.findIndex((it, i) => i > idx && !itemDone(it));
+    const anyOpen = queue.findIndex((it) => !itemDone(it));
     if (nextIdx !== -1) {
       setIdx(nextIdx);
       setPhase("lift");
@@ -1829,7 +2003,7 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
     } else {
       setPhase("done");
     }
-  }, [exercise, idx, queue, setsFor]);
+  }, [item, idx, queue, itemDone]);
 
   // Rest-Countdown
   useEffect(() => {
@@ -1885,16 +2059,16 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
       playSound("set", soundOn);
       buzz(40, hapticsOn);
     }
-    const willBeDone = doneCount + 1 >= WO_TARGET_SETS;
-    const openAfter = queue.filter(
-      (e) => (e === exercise ? doneCount + 1 : setsFor(e)) < WO_TARGET_SETS,
+    const willBeDone = doneCount + 1 >= targetSets;
+    const openAfter = queue.filter((it) =>
+      it.name === exercise ? doneCount + 1 < it.sets : !itemDone(it),
     ).length;
 
     // Coach-Feedback für die Pause
     const lastTop = lastSession
       ? lastSession.sets.reduce((m, x) => Math.max(m, x.weight), 0)
       : 0;
-    const setsLeft = WO_TARGET_SETS - (doneCount + 1);
+    const setsLeft = targetSets - (doneCount + 1);
     let fb;
     if (isPr) fb = `🏆 Neuer Rekord — ${w} kg!`;
     else if (lastTop > 0 && w > lastTop) fb = "🔥 Stärker als letzte Woche!";
@@ -1909,8 +2083,9 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
       setPhase("done");
       playSound("pr", soundOn);
     } else {
-      setRestTotal(restSeconds);
-      setRestLeft(restSeconds);
+      const r0 = item?.rest ?? restSeconds;
+      setRestTotal(r0);
+      setRestLeft(r0);
       setPhase("rest");
     }
   };
@@ -1970,22 +2145,20 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
 
   // Nächste offene Übung (für Coach-Karte in der Pause)
   const nextUp = useMemo(() => {
-    const currentDone = setsFor(exercise) >= WO_TARGET_SETS;
-    if (!currentDone) return null;
+    if (item && !itemDone(item)) return null;
     return (
-      queue.find((e, i) => i > idx && setsFor(e) < WO_TARGET_SETS) ||
-      queue.find((e) => setsFor(e) < WO_TARGET_SETS) ||
+      queue.find((it, i) => i > idx && !itemDone(it)) ||
+      queue.find((it) => !itemDone(it)) ||
       null
     );
-  }, [queue, idx, exercise, setsFor]);
+  }, [queue, idx, item, itemDone]);
 
+  const totalTarget = queue.reduce((n, it) => n + it.sets, 0);
   const totalSetsDone = queue.reduce(
-    (n, e) => n + Math.min(setsFor(e), WO_TARGET_SETS),
+    (n, it) => n + Math.min(setsFor(it.name), it.sets),
     0,
   );
-  const totalPct = queue.length
-    ? totalSetsDone / (queue.length * WO_TARGET_SETS)
-    : 0;
+  const totalPct = totalTarget ? totalSetsDone / totalTarget : 0;
   const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
   const ss = String(elapsed % 60).padStart(2, "0");
 
@@ -2118,20 +2291,16 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
 
       <div className="ig-wo-nextline">
         {(() => {
-          const open = queue.filter((e) => setsFor(e) < WO_TARGET_SETS).length;
+          const open = queue.filter((it) => !itemDone(it)).length;
           const next =
-            queue.find(
-              (e, i) => i > idx && setsFor(e) < WO_TARGET_SETS,
-            ) ||
-            queue.find(
-              (e, i) => i !== idx && setsFor(e) < WO_TARGET_SETS,
-            );
-          if (open <= 1 && setsFor(exercise) < WO_TARGET_SETS)
+            queue.find((it, i) => i > idx && !itemDone(it)) ||
+            queue.find((it, i) => i !== idx && !itemDone(it));
+          if (open <= 1 && item && !itemDone(item))
             return "🏁 Letzte Übung — dann hast du's geschafft!";
           if (!next) return "Gleich geschafft!";
           return (
             <>
-              Danach: <strong>{next}</strong>
+              Danach: <strong>{next.name}</strong>
               {open > 2 && ` · noch ${open - 1} weitere`}
             </>
           );
@@ -2149,8 +2318,9 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
           transition: dragRef.current?.active ? "none" : "transform 0.35s var(--ease-out)",
         }}
       >
-        {queue.map((e, i) => {
-          const m = EXERCISE_META[e];
+        {queue.map((it, i) => {
+          const e = it.name;
+          const m = it.entry || {};
           const active = i === idx;
           return (
             <div
@@ -2176,8 +2346,11 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
                 <div className="ig-wo-card-info">
                   <h3 className="ig-wo-ex-name">{e}</h3>
                   <div className="ig-plan-badges">
-                    {m && <span className="ig-badge">Gerät {m.nr}</span>}
-                    <span className="ig-badge">{m?.reps || "8–12"} Wdh.</span>
+                    {m?.nr && <span className="ig-badge">Gerät {m.nr}</span>}
+                    <span className="ig-badge">{it.sets} × {it.reps} Wdh.</span>
+                    {it.weight != null && (
+                      <span className="ig-badge dim">Ziel {it.weight} kg</span>
+                    )}
                   </div>
                   {active && (
                     <div className="ig-wo-mini-stats mono">
@@ -2193,7 +2366,7 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
                   )}
                 </div>
               </div>
-              {active && m?.hint && m.hint !== "Selbsterklärend" && (
+              {active && m?.hint && (
                 <p className="ig-wo-hint">{m.hint}</p>
               )}
               {active && milestone && (
@@ -2208,7 +2381,7 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
 
       <div className="ig-wo-bottom">
         <div className="ig-wo-sets">
-          {Array.from({ length: WO_TARGET_SETS }, (_, i) => (
+          {Array.from({ length: targetSets }, (_, i) => (
             <span
               key={i}
               className={"ig-prog-dot" + (i < doneCount ? " done" : i === doneCount ? " next" : "")}
@@ -2243,13 +2416,13 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
         </div>
         <button
           className="ig-btn-primary wide xl"
-          disabled={doneCount >= WO_TARGET_SETS}
+          disabled={doneCount >= targetSets}
           onClick={completeSet}
         >
           <Check size={20} />
-          {doneCount >= WO_TARGET_SETS
+          {doneCount >= targetSets
             ? "Übung fertig"
-            : `Satz ${doneCount + 1} von ${WO_TARGET_SETS} abschließen`}
+            : `Satz ${doneCount + 1} von ${targetSets} abschließen`}
         </button>
       </div>
 
@@ -2289,15 +2462,13 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
               {nextUp && (
                 <div className="ig-wo-coach">
                   <span className="ig-field-label">Als Nächstes</span>
-                  <span className="ig-wo-coach-name">{nextUp}</span>
+                  <span className="ig-wo-coach-name">{nextUp.name}</span>
                   <div className="ig-plan-badges">
-                    <span className="ig-badge">{WO_TARGET_SETS} Sätze</span>
-                    <span className="ig-badge">
-                      {EXERCISE_META[nextUp]?.reps || "8–12"} Wdh.
-                    </span>
-                    {EXERCISE_META[nextUp]?.zone && (
+                    <span className="ig-badge">{nextUp.sets} Sätze</span>
+                    <span className="ig-badge">{nextUp.reps} Wdh.</span>
+                    {nextUp.entry?.zone && (
                       <span className="ig-badge dim">
-                        {ZONE_LABEL[EXERCISE_META[nextUp].zone]}
+                        {ZONE_LABEL[nextUp.entry.zone]}
                       </span>
                     )}
                   </div>
@@ -2308,7 +2479,7 @@ function WorkoutMode({ data, update, queue, onExit, onFinish }) {
               )}
               {!nextUp && (
                 <span className="ig-wo-coach-sub">
-                  Gleiche Übung — Satz {doneCount + 1} von {WO_TARGET_SETS}
+                  Gleiche Übung — Satz {doneCount + 1} von {targetSets}
                 </span>
               )}
               <button className="ig-wo-undo" onClick={undoLastSet}>
@@ -2356,252 +2527,646 @@ function RestRing({ left, total }) {
   );
 }
 
-/* ---------------- Plan / Split tab ---------------- */
-function PlanTab({ data, update }) {
-  const split = normalizeSplit(data.split);
+/* ---------------- Pläne: Manager + Editor + Bibliothek ---------------- */
+function PlansTab({ data, update }) {
+  const [editingId, setEditingId] = useState(null);
+  const plans = data.plans || [];
 
-  const setDay = (day, unit) =>
+  const setActive = (id) =>
+    update((prev) => ({ ...prev, activePlanId: id }));
+
+  const createPlan = () => {
+    const plan = {
+      id: "plan-" + uid(),
+      name: "Neuer Plan",
+      color: PLAN_COLORS[plans.length % PLAN_COLORS.length],
+      icon: PLAN_ICONS[plans.length % PLAN_ICONS.length],
+      description: "",
+      days: [],
+      exercises: [],
+    };
+    update((prev) => ({ ...prev, plans: [...(prev.plans || []), plan] }));
+    setEditingId(plan.id);
+  };
+
+  const duplicatePlan = (p) => {
+    const copy = {
+      ...p,
+      id: "plan-" + uid(),
+      name: p.name + " (Kopie)",
+      days: [],
+      exercises: p.exercises.map((e) => ({ ...e })),
+    };
+    update((prev) => ({ ...prev, plans: [...prev.plans, copy] }));
+  };
+
+  const deletePlan = (p) => {
+    if (!window.confirm(`Plan "${p.name}" wirklich löschen?`)) return;
     update((prev) => {
-      const s = normalizeSplit(prev.split);
+      const plans = prev.plans.filter((x) => x.id !== p.id);
       return {
         ...prev,
-        split: { ...s, mode: "week", days: { ...s.days, [day]: unit } },
+        plans,
+        activePlanId:
+          prev.activePlanId === p.id ? plans[0]?.id || null : prev.activePlanId,
       };
     });
+  };
 
-  const setMode = (mode) =>
-    update((prev) => {
-      const s = normalizeSplit(prev.split);
-      const interval = { ...s.interval };
-      if (mode === "interval" && !interval.anchor) interval.anchor = todayISO();
-      return { ...prev, split: { ...s, mode, interval } };
-    });
-
-  const setInterval_ = (patch) =>
-    update((prev) => {
-      const s = normalizeSplit(prev.split);
-      return {
-        ...prev,
-        split: {
-          ...s,
-          mode: "interval",
-          interval: { ...s.interval, ...patch },
-        },
-      };
-    });
-
-  const applyPreset = (p) => update((prev) => ({ ...prev, split: p.make() }));
-
-  const trainingDays = WEEKDAYS.filter((d) => split.days[d.key] !== "rest");
-
-  const nextIntervalDays = useMemo(() => {
-    if (split.mode !== "interval" || !split.interval.anchor) return [];
-    const anchor = new Date(split.interval.anchor + "T00:00:00");
-    const now = new Date(todayISO() + "T00:00:00");
-    const out = [];
-    for (let i = 0; i < 14 && out.length < 4; i++) {
-      const d = new Date(now);
-      d.setDate(now.getDate() + i);
-      const diff = Math.round((d - anchor) / 86400000);
-      if (diff >= 0 && diff % split.interval.every === 0) {
-        out.push(
-          d.toLocaleDateString("de-DE", {
-            weekday: "short",
-            day: "2-digit",
-            month: "2-digit",
-          }),
-        );
-      }
-    }
-    return out;
-  }, [split]);
+  const editing = plans.find((p) => p.id === editingId);
 
   return (
     <div className="ig-tabpane">
       <div className="ig-card">
-        <div className="ig-field-label">Split-Vorlagen</div>
-        <div className="ig-preset-list">
-          {SPLIT_PRESETS.map((p) => {
-            const active = p.matches(split);
+        <div className="ig-field-label">Meine Trainingspläne</div>
+        {plans.length === 0 && (
+          <p className="ig-empty">
+            🗂️ Noch keine Pläne. Erstell deinen ersten — dauert keine zwei
+            Minuten.
+          </p>
+        )}
+        <div className="ig-plan-list">
+          {plans.map((p) => {
+            const active = p.id === data.activePlanId;
             return (
-              <button
+              <div
                 key={p.id}
-                className={"ig-preset-card" + (active ? " active" : "")}
-                onClick={() => applyPreset(p)}
+                className={"ig-plan-card" + (active ? " active" : "")}
+                style={{ "--plan-color": p.color }}
               >
-                <span className="ig-preset-name">{p.name}</span>
-                <span className="ig-preset-desc">{p.desc}</span>
-                {active && <Check size={16} className="ig-preset-check" />}
-              </button>
+                <button
+                  className="ig-plan-main"
+                  onClick={() => setActive(p.id)}
+                  aria-label={`Plan ${p.name} aktivieren`}
+                >
+                  <span className="ig-plan-icon">{p.icon}</span>
+                  <span className="ig-plan-info">
+                    <span className="ig-plan-name">
+                      {p.name}
+                      {active && <span className="ig-plan-active-tag">Aktiv</span>}
+                    </span>
+                    <span className="ig-plan-meta">
+                      {p.exercises.length}{" "}
+                      {p.exercises.length === 1 ? "Übung" : "Übungen"}
+                      {(p.days || []).length > 0 &&
+                        " · " +
+                          WEEKDAYS.filter((d) => p.days.includes(d.key))
+                            .map((d) => d.short)
+                            .join(" ")}
+                    </span>
+                  </span>
+                </button>
+                <div className="ig-plan-actions">
+                  <button
+                    className="ig-icon-btn ghost sm"
+                    onClick={() => setEditingId(p.id)}
+                    aria-label="Bearbeiten"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    className="ig-icon-btn ghost sm"
+                    onClick={() => duplicatePlan(p)}
+                    aria-label="Duplizieren"
+                  >
+                    📋
+                  </button>
+                  <button
+                    className="ig-icon-btn ghost sm"
+                    onClick={() => deletePlan(p)}
+                    aria-label="Löschen"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
             );
           })}
         </div>
+        <button className="ig-btn-primary wide" onClick={createPlan}>
+          <Plus size={16} /> Neuer Plan
+        </button>
       </div>
 
-      <div className="ig-card">
-        <div className="ig-field-label">Modus</div>
-        <div className="ig-mode-toggle">
-          <button
-            className={"ig-chip" + (split.mode === "week" ? " active" : "")}
-            onClick={() => setMode("week")}
-          >
-            Wochentage
-          </button>
-          <button
-            className={"ig-chip" + (split.mode === "interval" ? " active" : "")}
-            onClick={() => setMode("interval")}
-          >
-            Intervall
-          </button>
-        </div>
-
-        {split.mode === "week" ? (
-          <ul className="ig-week-list">
-            {WEEKDAYS.map((d) => (
-              <li
-                key={d.key}
-                className={
-                  "ig-week-row" + (d.key === todayKey() ? " today" : "")
-                }
-              >
-                <span className="ig-week-day">
-                  {d.label}
-                  {d.key === todayKey() && <span className="ig-today-dot" />}
-                </span>
-                <select
-                  className="ig-select slim"
-                  value={split.days[d.key]}
-                  onChange={(e) => setDay(d.key, e.target.value)}
-                >
-                  <option value="rest">Ruhetag</option>
-                  <option value="ok">Oberkörper</option>
-                  <option value="uk">Unterkörper</option>
-                  <option value="gk">Ganzkörper</option>
-                </select>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="ig-interval-box">
-            <div className="ig-interval-row">
-              <span>Trainiere alle</span>
-              <select
-                className="ig-select slim narrow"
-                value={split.interval.every}
-                onChange={(e) =>
-                  setInterval_({ every: Number(e.target.value) })
-                }
-              >
-                <option value={2}>2 Tage</option>
-                <option value={3}>3 Tage</option>
-                <option value={4}>4 Tage</option>
-              </select>
-            </div>
-            <div className="ig-interval-row">
-              <span>Einheit</span>
-              <select
-                className="ig-select slim"
-                value={split.interval.unit}
-                onChange={(e) => setInterval_({ unit: e.target.value })}
-              >
-                <option value="ok">Oberkörper</option>
-                <option value="uk">Unterkörper</option>
-                <option value="gk">Ganzkörper</option>
-              </select>
-            </div>
-            <button
-              className="ig-chip"
-              onClick={() => setInterval_({ anchor: todayISO() })}
-            >
-              <RotateCcw
-                size={13}
-                style={{ verticalAlign: "-2px", marginRight: 5 }}
-              />
-              Heute als Starttag setzen
-            </button>
-            {nextIntervalDays.length > 0 && (
-              <p className="ig-empty" style={{ color: "var(--chalk)" }}>
-                Nächste Einheiten: {nextIntervalDays.join(" · ")}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="ig-card">
-        <div className="ig-field-label">Dein Split</div>
-        {split.mode === "interval" ? (
-          <p className="ig-empty" style={{ color: "var(--chalk)" }}>
-            Alle {split.interval.every} Tage: {UNIT_LABEL[split.interval.unit]}
-            {split.interval.anchor
-              ? ` (Start ${fmtDate(split.interval.anchor)})`
-              : " — Starttag noch setzen"}
-          </p>
-        ) : trainingDays.length === 0 ? (
-          <p className="ig-empty">
-            Noch kein Trainingstag gewählt. Nimm eine Vorlage oder stell die
-            Tage oben ein.
-          </p>
-        ) : (
-          <p className="ig-empty" style={{ color: "var(--chalk)" }}>
-            {trainingDays.length}× pro Woche:{" "}
-            {trainingDays
-              .map((d) => `${d.short} (${UNIT_LABEL[split.days[d.key]]})`)
-              .join(" · ")}
-          </p>
-        )}
-      </div>
+      {editing && (
+        <PlanEditor
+          plan={editing}
+          data={data}
+          update={update}
+          onClose={() => setEditingId(null)}
+        />
+      )}
     </div>
   );
 }
 
-/* ---------------- Progress tab ---------------- */
+function PlanEditor({ plan, data, update, onClose }) {
+  const [showPicker, setShowPicker] = useState(false);
+
+  const patch = (fields) =>
+    update((prev) => ({
+      ...prev,
+      plans: prev.plans.map((p) =>
+        p.id === plan.id ? { ...p, ...fields } : p,
+      ),
+    }));
+
+  const patchExercise = (i, fields) =>
+    patch({
+      exercises: plan.exercises.map((e, idx) =>
+        idx === i ? { ...e, ...fields } : e,
+      ),
+    });
+
+  const move = (i, dir) => {
+    const arr = [...plan.exercises];
+    const j = i + dir;
+    if (j < 0 || j >= arr.length) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    patch({ exercises: arr });
+  };
+
+  const removeExercise = (i) =>
+    patch({ exercises: plan.exercises.filter((_, idx) => idx !== i) });
+
+  const addExercise = (libEntry) => {
+    patch({
+      exercises: [
+        ...plan.exercises,
+        {
+          exerciseId: libEntry.id,
+          sets: 3,
+          reps: 10,
+          weight: null,
+          rest: data.settings?.restSeconds || 90,
+        },
+      ],
+    });
+    setShowPicker(false);
+  };
+
+  const toggleDay = (key) =>
+    patch({
+      days: (plan.days || []).includes(key)
+        ? plan.days.filter((d) => d !== key)
+        : [...(plan.days || []), key],
+    });
+
+  const byId = useMemo(() => {
+    const m = {};
+    (data.library || []).forEach((e) => {
+      m[e.id] = e;
+    });
+    return m;
+  }, [data.library]);
+
+  return (
+    <div className="ig-sheet">
+      <div className="ig-sheet-head">
+        <button className="ig-icon-btn ghost" onClick={onClose} aria-label="Zurück">
+          <ChevronLeft size={20} />
+        </button>
+        <input
+          className="ig-sheet-title-input"
+          value={plan.name}
+          onChange={(e) => patch({ name: e.target.value })}
+          placeholder="Plan-Name"
+        />
+        <button className="ig-icon-btn primary" onClick={onClose} aria-label="Fertig">
+          <Check size={18} />
+        </button>
+      </div>
+
+      <div className="ig-sheet-body">
+        <div className="ig-card">
+          <div className="ig-field-label">Aussehen</div>
+          <div className="ig-accent-row">
+            {PLAN_COLORS.map((c) => (
+              <button
+                key={c}
+                className={"ig-accent-swatch" + (plan.color === c ? " active" : "")}
+                style={{ background: c }}
+                onClick={() => patch({ color: c })}
+                aria-label={`Farbe ${c}`}
+              />
+            ))}
+          </div>
+          <div className="ig-icon-row">
+            {PLAN_ICONS.map((ic) => (
+              <button
+                key={ic}
+                className={"ig-emoji-btn" + (plan.icon === ic ? " active" : "")}
+                onClick={() => patch({ icon: ic })}
+              >
+                {ic}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="ig-card">
+          <div className="ig-field-label">Trainingstage (optional)</div>
+          <div className="ig-day-row">
+            {WEEKDAYS.map((d) => (
+              <button
+                key={d.key}
+                className={
+                  "ig-chip sm" + ((plan.days || []).includes(d.key) ? " active" : "")
+                }
+                onClick={() => toggleDay(d.key)}
+              >
+                {d.short}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="ig-card">
+          <div className="ig-field-label">
+            Übungen ({plan.exercises.length})
+          </div>
+          {plan.exercises.length === 0 && (
+            <p className="ig-empty">Noch keine Übungen im Plan.</p>
+          )}
+          <div className="ig-pe-list">
+            {plan.exercises.map((e, i) => {
+              const entry = byId[e.exerciseId];
+              return (
+                <div key={e.exerciseId + i} className="ig-pe-row">
+                  <div className="ig-pe-head">
+                    <span className="ig-pe-num mono">{i + 1}</span>
+                    <span className="ig-pe-name">
+                      {entry?.name || "Unbekannt"}
+                      {entry?.muscle && (
+                        <span className="ig-pe-muscle">
+                          {MUSCLE_NAME[entry.muscle]}
+                        </span>
+                      )}
+                    </span>
+                    <div className="ig-pe-order">
+                      <button
+                        className="ig-icon-btn ghost sm"
+                        onClick={() => move(i, -1)}
+                        disabled={i === 0}
+                        aria-label="Nach oben"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        className="ig-icon-btn ghost sm"
+                        onClick={() => move(i, 1)}
+                        disabled={i === plan.exercises.length - 1}
+                        aria-label="Nach unten"
+                      >
+                        ↓
+                      </button>
+                      <button
+                        className="ig-icon-btn ghost sm"
+                        onClick={() => removeExercise(i)}
+                        aria-label="Entfernen"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  <div className="ig-pe-config mono">
+                    <label>
+                      Sätze
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="1"
+                        value={e.sets}
+                        onChange={(ev) =>
+                          patchExercise(i, {
+                            sets: Math.max(1, Number(ev.target.value) || 1),
+                          })
+                        }
+                      />
+                    </label>
+                    <label>
+                      Wdh.
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="1"
+                        value={e.reps}
+                        onChange={(ev) =>
+                          patchExercise(i, {
+                            reps: Math.max(1, Number(ev.target.value) || 1),
+                          })
+                        }
+                      />
+                    </label>
+                    <label>
+                      kg (Ziel)
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        placeholder="–"
+                        value={e.weight ?? ""}
+                        onChange={(ev) =>
+                          patchExercise(i, {
+                            weight:
+                              ev.target.value === ""
+                                ? null
+                                : Number(ev.target.value),
+                          })
+                        }
+                      />
+                    </label>
+                    <label>
+                      Pause (s)
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        step="15"
+                        value={e.rest}
+                        onChange={(ev) =>
+                          patchExercise(i, {
+                            rest: Math.max(0, Number(ev.target.value) || 0),
+                          })
+                        }
+                      />
+                    </label>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <button
+            className="ig-btn-primary wide"
+            onClick={() => setShowPicker(true)}
+          >
+            <Plus size={16} /> Übung hinzufügen
+          </button>
+        </div>
+      </div>
+
+      {showPicker && (
+        <LibraryPicker
+          data={data}
+          update={update}
+          usedIds={plan.exercises.map((e) => e.exerciseId)}
+          onPick={addExercise}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function LibraryPicker({ data, update, usedIds, onPick, onClose }) {
+  const [query, setQuery] = useState("");
+  const [muscle, setMuscle] = useState("");
+  const [showCustom, setShowCustom] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [customMuscle, setCustomMuscle] = useState("chest");
+  const [customEquipment, setCustomEquipment] = useState("");
+
+  const library = data.library || [];
+
+  const toggleFav = (id) =>
+    update((prev) => ({
+      ...prev,
+      library: prev.library.map((e) =>
+        e.id === id ? { ...e, favorite: !e.favorite } : e,
+      ),
+    }));
+
+  const createCustom = () => {
+    const name = customName.trim();
+    if (!name) return;
+    const entry = {
+      id: "custom-" + uid(),
+      name,
+      muscle: customMuscle,
+      zone: MUSCLE_ZONE[customMuscle],
+      zone2: null,
+      equipment: customEquipment.trim(),
+      custom: true,
+    };
+    update((prev) => ({ ...prev, library: [...prev.library, entry] }));
+    onPick(entry);
+  };
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return library
+      .filter((e) => {
+        if (muscle && e.muscle !== muscle) return false;
+        if (!q) return true;
+        return (
+          e.name.toLowerCase().includes(q) ||
+          (e.equipment || "").toLowerCase().includes(q) ||
+          (MUSCLE_NAME[e.muscle] || "").toLowerCase().includes(q)
+        );
+      })
+      .sort(
+        (a, b) =>
+          (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0) ||
+          a.name.localeCompare(b.name),
+      );
+  }, [library, query, muscle]);
+
+  return (
+    <div className="ig-sheet ig-sheet-over">
+      <div className="ig-sheet-head">
+        <button className="ig-icon-btn ghost" onClick={onClose} aria-label="Zurück">
+          <ChevronLeft size={20} />
+        </button>
+        <span className="ig-sheet-title">Übung wählen</span>
+        <div style={{ width: 40 }} />
+      </div>
+
+      <div className="ig-sheet-search">
+        <Search size={15} className="ig-sheet-search-icon" />
+        <input
+          className="ig-input"
+          placeholder="Suchen …"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+
+      <div className="ig-picker-chips">
+        <button
+          className={"ig-chip sm" + (muscle === "" ? " active" : "")}
+          onClick={() => setMuscle("")}
+        >
+          Alle
+        </button>
+        {MUSCLE_GROUPS.map((m) => (
+          <button
+            key={m.id}
+            className={"ig-chip sm" + (muscle === m.id ? " active" : "")}
+            onClick={() => setMuscle(muscle === m.id ? "" : m.id)}
+          >
+            {m.name}
+          </button>
+        ))}
+      </div>
+
+      <div className="ig-sheet-body">
+        {!showCustom ? (
+          <button
+            className="ig-picker-custom"
+            onClick={() => setShowCustom(true)}
+          >
+            <Plus size={15} /> Eigene Übung erstellen
+          </button>
+        ) : (
+          <div className="ig-card ig-custom-form">
+            <div className="ig-field-label">Eigene Übung</div>
+            <input
+              className="ig-input"
+              placeholder="Name, z. B. Butterfly Reverse"
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              autoFocus
+            />
+            <div className="ig-picker-chips wrap">
+              {MUSCLE_GROUPS.map((m) => (
+                <button
+                  key={m.id}
+                  className={
+                    "ig-chip sm" + (customMuscle === m.id ? " active" : "")
+                  }
+                  onClick={() => setCustomMuscle(m.id)}
+                >
+                  {m.name}
+                </button>
+              ))}
+            </div>
+            <input
+              className="ig-input"
+              placeholder="Gerät (optional)"
+              value={customEquipment}
+              onChange={(e) => setCustomEquipment(e.target.value)}
+            />
+            <button
+              className="ig-btn-primary wide"
+              disabled={!customName.trim()}
+              onClick={createCustom}
+            >
+              <Check size={16} /> Erstellen & hinzufügen
+            </button>
+          </div>
+        )}
+
+        <ul className="ig-picker-list">
+          {results.map((e) => {
+            const used = usedIds.includes(e.id);
+            return (
+              <li key={e.id} className="ig-picker-row">
+                <button
+                  className="ig-picker-fav"
+                  onClick={() => toggleFav(e.id)}
+                  aria-label={e.favorite ? "Favorit entfernen" : "Als Favorit markieren"}
+                >
+                  {e.favorite ? "★" : "☆"}
+                </button>
+                <button
+                  className="ig-picker-main"
+                  disabled={used}
+                  onClick={() => onPick(e)}
+                >
+                  <span className="ig-picker-name">
+                    {e.name}
+                    {e.custom && <span className="ig-pe-muscle">Eigene</span>}
+                  </span>
+                  <span className="ig-picker-meta">
+                    {[MUSCLE_NAME[e.muscle], e.equipment]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </button>
+                {used ? (
+                  <Check size={16} className="ig-picker-used" />
+                ) : (
+                  <Plus size={16} className="ig-picker-add" />
+                )}
+              </li>
+            );
+          })}
+          {results.length === 0 && (
+            <p className="ig-empty">Nichts gefunden — erstell sie als eigene Übung.</p>
+          )}
+        </ul>
+      </div>
+    </div>
+  );
+}
+/* ---------------- Progress tab: alle Übungen des Plans ---------------- */
+function exerciseStats(logs, name) {
+  const list = logs
+    .filter((l) => l.exercise === name)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  if (!list.length) return null;
+  let best = 0;
+  let bestE1 = 0;
+  let volume = 0;
+  let setCount = 0;
+  let repSum = 0;
+  let weightSum = 0;
+  const tops = [];
+  for (const l of list) {
+    let top = 0;
+    for (const s of l.sets) {
+      if (s.weight > best) best = s.weight;
+      if (s.weight > top) top = s.weight;
+      const e1 = e1rm(s.weight, s.reps);
+      if (e1 > bestE1) bestE1 = e1;
+      volume += s.reps * s.weight;
+      repSum += s.reps;
+      weightSum += s.weight;
+      setCount++;
+    }
+    if (top > 0) tops.push(top);
+  }
+  const first = tops[0] || 0;
+  const last = tops[tops.length - 1] || 0;
+  return {
+    sessions: list.length,
+    best,
+    bestE1: Math.round(bestE1),
+    volume,
+    diff: round1(last - first),
+    lastDate: list[list.length - 1].date,
+    avgWeight: setCount ? round1(weightSum / setCount) : 0,
+    avgReps: setCount ? Math.round(repSum / setCount) : 0,
+    spark: tops.slice(-8),
+  };
+}
+
 function ProgressTab({ data }) {
-  const [exercise, setExercise] = useState(data.exercises[0] || "");
+  const plans = data.plans || [];
+  const [planId, setPlanId] = useState(
+    () => getTodayPlan(data)?.id || plans[0]?.id || null,
+  );
+  const plan = plans.find((p) => p.id === planId) || plans[0] || null;
 
-  useEffect(() => {
-    if (!data.exercises.includes(exercise) && data.exercises.length)
-      setExercise(data.exercises[0]);
-  }, [data.exercises]); // eslint-disable-line
-
-  const chartData = useMemo(() => {
-    return data.logs
-      .filter((l) => l.exercise === exercise)
-      .map((l) => ({
-        date: l.date,
-        label: fmtDate(l.date),
-        top: l.sets.reduce((m, s) => Math.max(m, s.weight), 0),
-        volume: l.sets.reduce((v, s) => v + s.reps * s.weight, 0),
-        e1: round1(
-          l.sets.reduce((m, s) => Math.max(m, e1rm(s.weight, s.reps)), 0),
-        ),
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [data.logs, exercise]);
-
-  const best = chartData.reduce((m, r) => Math.max(m, r.top), 0);
-  const bestE1 = chartData.reduce((m, r) => Math.max(m, r.e1), 0);
-  const sessions = chartData.length;
-  const first = chartData[0]?.top || 0;
-  const last = chartData[chartData.length - 1]?.top || 0;
-  const diff = round1(last - first);
-
-  const records = useMemo(() => {
-    const map = {};
-    data.logs.forEach((l) =>
-      l.sets.forEach((s) => {
-        if (!map[l.exercise] || s.weight > map[l.exercise].weight) {
-          map[l.exercise] = { weight: s.weight, reps: s.reps, date: l.date };
-        }
-      }),
-    );
-    return Object.entries(map).sort((a, b) => b[1].weight - a[1].weight);
-  }, [data.logs]);
+  const byId = useMemo(() => {
+    const m = {};
+    (data.library || []).forEach((e) => {
+      m[e.id] = e;
+    });
+    return m;
+  }, [data.library]);
 
   const stats = useMemo(
     () => calcStats(data.logs, data.settings?.weeklyGoal || 3),
     [data.logs, data.settings?.weeklyGoal],
   );
+
+  const rows = useMemo(() => {
+    if (!plan) return [];
+    return plan.exercises.map((it) => {
+      const name = byId[it.exerciseId]?.name || "?";
+      return { name, item: it, s: exerciseStats(data.logs, name) };
+    });
+  }, [plan, byId, data.logs]);
 
   return (
     <div className="ig-tabpane">
@@ -2628,17 +3193,11 @@ function ProgressTab({ data }) {
           <span className="ig-dash-label">Gesamtvolumen</span>
         </div>
         <div className="ig-card ig-dash-stat">
-          <Dumbbell size={16} className="ig-dash-icon" />
+          <Flame size={16} className="ig-dash-icon" />
           <span className="ig-dash-num mono">
-            <CountUp
-              value={
-                stats.totalWorkouts
-                  ? Math.round(stats.totalSets / stats.totalWorkouts)
-                  : 0
-              }
-            />
+            <CountUp value={stats.streakWeeks} />
           </span>
-          <span className="ig-dash-label">Ø Sätze/Einheit</span>
+          <span className="ig-dash-label">Wochen Serie</span>
         </div>
         <div className="ig-card ig-dash-stat">
           <Trophy size={16} className="ig-dash-icon" />
@@ -2649,180 +3208,74 @@ function ProgressTab({ data }) {
         </div>
       </div>
 
-      <div className="ig-card">
-        <div className="ig-field-label">Übung</div>
-        <select
-          className="ig-select"
-          value={exercise}
-          onChange={(e) => setExercise(e.target.value)}
-        >
-          {data.exercises.map((ex) => (
-            <option key={ex} value={ex}>
-              {ex}
-            </option>
+      {plans.length > 1 && (
+        <div className="ig-progress-plans">
+          {plans.map((p) => (
+            <button
+              key={p.id}
+              className={"ig-chip" + (p.id === plan?.id ? " active" : "")}
+              onClick={() => setPlanId(p.id)}
+            >
+              {p.icon} {p.name}
+            </button>
           ))}
-        </select>
-      </div>
+        </div>
+      )}
 
-      <div className="ig-dash-grid">
-        <div className="ig-card ig-dash-stat">
-          <Trophy size={16} className="ig-dash-icon" />
-          <span className="ig-dash-num mono">{best} kg</span>
-          <span className="ig-dash-label">Bestwert</span>
-        </div>
-        <div className="ig-card ig-dash-stat">
-          <Zap size={16} className="ig-dash-icon" />
-          <span className="ig-dash-num mono">{Math.round(bestE1)} kg</span>
-          <span className="ig-dash-label">1RM geschätzt</span>
-        </div>
-        <div className="ig-card ig-dash-stat">
-          <CalendarDays size={16} className="ig-dash-icon" />
-          <span className="ig-dash-num mono">{sessions}</span>
-          <span className="ig-dash-label">Einheiten</span>
-        </div>
-        <div className="ig-card ig-dash-stat">
-          <TrendingUp size={16} className="ig-dash-icon" />
-          <span
-            className="ig-dash-num mono"
-            style={{
-              color:
-                diff > 0
-                  ? "var(--plate-green)"
-                  : diff < 0
-                    ? "var(--plate-red)"
-                    : undefined,
-            }}
-          >
-            {diff > 0 ? "+" : ""}
-            {diff} kg
-          </span>
-          <span className="ig-dash-label">Zuwachs</span>
-        </div>
-      </div>
-
-      <div className="ig-card">
-        <div className="ig-field-label">Gewicht pro Einheit (Top-Satz)</div>
-        {chartData.length < 2 ? (
+      {!plan && (
+        <div className="ig-card">
           <p className="ig-empty">
-            Sobald du diese Übung an mehr als einem Tag geloggt hast, siehst du
-            hier deinen Fortschritt.
+            🗂️ Leg im Plan-Tab einen Trainingsplan an, um hier deinen
+            Fortschritt zu sehen.
           </p>
-        ) : (
-          <div className="ig-chart-wrap">
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart
-                data={chartData}
-                margin={{ top: 8, right: 12, left: -18, bottom: 0 }}
-              >
-                <CartesianGrid stroke="var(--grid)" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fill: "var(--chalk-dim)", fontSize: 11 }}
-                  axisLine={{ stroke: "var(--grid)" }}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: "var(--chalk-dim)", fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={40}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: "var(--surface-2)",
-                    border: "1px solid var(--grid)",
-                    borderRadius: 8,
-                    fontSize: 12,
-                  }}
-                  labelStyle={{ color: "var(--chalk-dim)" }}
-                  formatter={(v, name) => [
-                    v + " kg",
-                    name === "top" ? "Top-Satz" : "1RM geschätzt",
-                  ]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="top"
-                  stroke="var(--plate-yellow)"
-                  strokeWidth={2.5}
-                  dot={{ r: 3, fill: "var(--plate-yellow)" }}
-                  activeDot={{ r: 5 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="e1"
-                  stroke="var(--plate-blue)"
-                  strokeWidth={1.5}
-                  strokeDasharray="5 4"
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-            <div className="ig-legend">
-              <span>
-                <span
-                  className="ig-legend-dot"
-                  style={{ background: "var(--plate-yellow)" }}
-                />
-                Top-Satz
-              </span>
-              <span>
-                <span
-                  className="ig-legend-dot dashed"
-                  style={{ background: "var(--plate-blue)" }}
-                />
-                1RM geschätzt
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="ig-card">
-        <div className="ig-field-label">
-          <Trophy size={12} style={{ verticalAlign: "-2px", marginRight: 4 }} />
-          Rekorde (alle Übungen)
         </div>
-        {records.length === 0 ? (
-          <p className="ig-empty">📊 Nach deinem ersten Training erscheinen hier deine Daten.</p>
-        ) : (
-          <ul className="ig-history-list">
-            {records.map(([ex, r]) => (
-              <li key={ex} className="ig-history-row">
-                <span
-                  className="ig-history-date"
-                  style={{ color: "var(--chalk)" }}
-                >
-                  {ex}
-                </span>
-                <span className="mono">
-                  {r.weight} kg × {r.reps}
-                </span>
-                <span className="ig-history-vol mono">{fmtDate(r.date)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      )}
 
-      <div className="ig-card">
-        <div className="ig-field-label">Einheiten-Verlauf</div>
-        {chartData.length === 0 ? (
-          <p className="ig-empty">📊 Nach deinem ersten Training erscheinen hier deine Daten.</p>
-        ) : (
-          <ul className="ig-history-list">
-            {[...chartData].reverse().map((r) => (
-              <li key={r.date} className="ig-history-row">
-                <span className="ig-history-date">{r.label}</span>
-                <span className="mono">{r.top} kg</span>
-                <span className="ig-history-vol mono">
-                  Vol. {Math.round(r.volume)}
+      {rows.map(({ name, s }) => (
+        <div className="ig-card ig-ex-stat" key={name}>
+          <div className="ig-ex-stat-head">
+            <span className="ig-ex-stat-name">{name}</span>
+            {s && (
+              <span
+                className={
+                  "ig-ex-stat-diff mono" +
+                  (s.diff > 0 ? " pos" : s.diff < 0 ? " neg" : "")
+                }
+              >
+                {s.diff > 0 ? "🟢 +" : s.diff < 0 ? "🔴 " : "⚪ ±"}
+                {s.diff} kg
+              </span>
+            )}
+          </div>
+          {!s ? (
+            <p className="ig-empty">
+              📊 Noch keine Daten — nach dem ersten Training geht's hier los.
+            </p>
+          ) : (
+            <>
+              <div className="ig-ex-stat-row">
+                <Sparkline points={s.spark} w={110} h={34} />
+                <div className="ig-ex-stat-facts mono">
+                  <span>🏆 Bestwert {s.best} kg</span>
+                  <span>⚡ 1RM {s.bestE1} kg</span>
+                </div>
+              </div>
+              <div className="ig-ex-stat-grid mono">
+                <span>{s.sessions} Einheiten</span>
+                <span>
+                  Vol.{" "}
+                  {s.volume >= 1000
+                    ? `${round1(s.volume / 1000)}t`
+                    : `${Math.round(s.volume)} kg`}
                 </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                <span>Ø {s.avgWeight} kg</span>
+                <span>Ø {s.avgReps} Wdh.</span>
+                <span>Zuletzt {fmtDate(s.lastDate)}</span>
+              </div>
+            </>
+          )}
+        </div>
+      ))}
 
       <div className="ig-card">
         <div className="ig-field-label">
@@ -2848,7 +3301,6 @@ function ProgressTab({ data }) {
     </div>
   );
 }
-
 /* ---------------- BMI tab ---------------- */
 function BmiTab({ data, update }) {
   const [height, setHeight] = useState(data.profile.heightCm || "");
@@ -3465,6 +3917,85 @@ function Style() {
       .ig-rest-sub { font-size: 11px; color: var(--chalk-dim); line-height: 1.4; }
       .ig-banner-chev { flex-shrink: 0; margin-left: auto; opacity: 0.6; transition: transform 0.25s var(--ease-out); }
       .ig-banner-chev.open { transform: rotate(90deg); }
+      /* --- Plan-System --- */
+      .ig-plan-list { display: flex; flex-direction: column; gap: 8px; }
+      .ig-plan-card { display: flex; align-items: center; gap: 4px; background: rgba(35,39,48,0.5); border: 1px solid var(--glass-border); border-left: 3px solid var(--plan-color, var(--plate-yellow)); border-radius: 12px; padding: 4px 8px 4px 0; transition: border-color 0.2s; }
+      .ig-plan-card.active { border-color: var(--plan-color); background: rgba(35,39,48,0.75); }
+      .ig-plan-main { flex: 1; display: flex; align-items: center; gap: 12px; background: none; border: none; font-family: inherit; color: var(--chalk); text-align: left; padding: 10px 12px; cursor: pointer; min-width: 0; }
+      .ig-plan-icon { font-size: 22px; flex-shrink: 0; }
+      .ig-plan-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+      .ig-plan-name { font-size: 14.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+      .ig-plan-active-tag { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--plan-color); border: 1px solid var(--plan-color); border-radius: 999px; padding: 1.5px 7px; }
+      .ig-plan-meta { font-size: 11.5px; color: var(--chalk-dim); }
+      .ig-plan-actions { display: flex; gap: 2px; flex-shrink: 0; }
+      .ig-icon-btn.sm { width: 32px; height: 32px; font-size: 13px; }
+
+      .ig-sheet { position: fixed; inset: 0; z-index: 70; background: var(--bg); max-width: 430px; margin: 0 auto; display: flex; flex-direction: column; animation: ig-slide-up 0.3s var(--ease-out); }
+      .ig-sheet-over { z-index: 80; }
+      .ig-sheet-head { display: flex; align-items: center; gap: 10px; padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 10px; border-bottom: 1px solid var(--glass-border); flex-shrink: 0; }
+      .ig-sheet-title { flex: 1; font-weight: 700; font-size: 15px; }
+      .ig-sheet-title-input { flex: 1; background: none; border: none; border-bottom: 1px dashed var(--glass-border); color: var(--chalk); font-family: 'Oswald', sans-serif; font-size: 19px; font-weight: 700; padding: 4px 2px; min-width: 0; }
+      .ig-sheet-title-input:focus { outline: none; border-bottom-color: var(--plate-yellow); }
+      .ig-sheet-body { flex: 1; overflow-y: auto; padding: 14px 16px calc(env(safe-area-inset-bottom, 0px) + 20px); display: flex; flex-direction: column; gap: 12px; }
+      .ig-sheet-search { position: relative; padding: 12px 16px 0; flex-shrink: 0; }
+      .ig-sheet-search .ig-input { padding-left: 38px; }
+      .ig-sheet-search-icon { position: absolute; left: 29px; top: 27px; color: var(--chalk-dim); pointer-events: none; }
+
+      .ig-icon-row { display: flex; gap: 7px; flex-wrap: wrap; }
+      .ig-emoji-btn { width: 40px; height: 40px; font-size: 20px; background: rgba(35,39,48,0.6); border: 1.5px solid var(--glass-border); border-radius: 11px; cursor: pointer; transition: all 0.15s var(--ease-spring); }
+      .ig-emoji-btn.active { border-color: var(--plate-yellow); transform: scale(1.1); }
+      .ig-day-row { display: flex; gap: 6px; flex-wrap: wrap; }
+      .ig-chip.sm { padding: 6px 11px; font-size: 12px; }
+
+      .ig-pe-list { display: flex; flex-direction: column; gap: 8px; }
+      .ig-pe-row { background: rgba(35,39,48,0.5); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+      .ig-pe-head { display: flex; align-items: center; gap: 9px; }
+      .ig-pe-num { width: 22px; height: 22px; border-radius: 50%; background: var(--plate-yellow); color: #17130a; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .ig-pe-name { flex: 1; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
+      .ig-pe-muscle { font-size: 10px; color: var(--chalk-dim); border: 1px solid var(--glass-border); border-radius: 999px; padding: 1px 7px; font-weight: 400; }
+      .ig-pe-order { display: flex; gap: 2px; flex-shrink: 0; }
+      .ig-pe-order button:disabled { opacity: 0.25; }
+      .ig-pe-config { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+      .ig-pe-config label { display: flex; flex-direction: column; gap: 3px; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--chalk-dim); }
+      .ig-pe-config input { background: rgba(20,23,29,0.8); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--chalk); font-family: inherit; font-size: 14px; padding: 7px 4px; text-align: center; width: 100%; }
+      .ig-pe-config input:focus { outline: none; border-color: var(--plate-yellow); }
+
+      .ig-picker-chips { display: flex; gap: 6px; overflow-x: auto; padding: 10px 16px 2px; scrollbar-width: none; flex-shrink: 0; }
+      .ig-picker-chips::-webkit-scrollbar { display: none; }
+      .ig-picker-chips.wrap { flex-wrap: wrap; overflow: visible; padding: 0; }
+      .ig-picker-custom { display: flex; align-items: center; justify-content: center; gap: 7px; background: none; border: 1.5px dashed var(--glass-border); border-radius: 12px; color: var(--chalk-dim); font-family: inherit; font-size: 13px; padding: 12px; cursor: pointer; transition: all 0.2s; }
+      .ig-picker-custom:active { border-color: var(--plate-yellow); color: var(--plate-yellow); }
+      .ig-custom-form { gap: 10px; }
+      .ig-picker-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+      .ig-picker-row { display: flex; align-items: center; gap: 4px; background: rgba(35,39,48,0.5); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2px 12px 2px 2px; }
+      .ig-picker-fav { background: none; border: none; font-size: 17px; color: var(--plate-yellow); width: 38px; height: 44px; cursor: pointer; flex-shrink: 0; }
+      .ig-picker-main { flex: 1; display: flex; flex-direction: column; gap: 1px; background: none; border: none; font-family: inherit; color: var(--chalk); text-align: left; padding: 9px 4px; cursor: pointer; min-width: 0; }
+      .ig-picker-main:disabled { opacity: 0.45; cursor: default; }
+      .ig-picker-name { font-size: 13.5px; font-weight: 600; display: flex; gap: 7px; align-items: center; }
+      .ig-picker-meta { font-size: 11px; color: var(--chalk-dim); }
+      .ig-picker-add { color: var(--plate-yellow); flex-shrink: 0; }
+      .ig-picker-used { color: var(--plate-green); flex-shrink: 0; }
+
+      .ig-banner-icon { font-size: 16px; }
+      .ig-rest-hint { margin: -6px 2px 0; font-size: 11.5px; color: var(--chalk-dim); }
+      .ig-today-plan { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+      .ig-today-plan li { display: flex; align-items: center; gap: 10px; background: rgba(35,39,48,0.45); border-radius: 10px; padding: 8px 11px; }
+      .ig-today-plan-num { width: 20px; height: 20px; border-radius: 50%; background: rgba(var(--accent-rgb),0.18); color: var(--plate-yellow); font-size: 10.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .ig-today-plan-name { flex: 1; font-size: 13px; }
+      .ig-today-plan-meta { font-size: 11px; color: var(--chalk-dim); }
+
+      .ig-progress-plans { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+      .ig-progress-plans::-webkit-scrollbar { display: none; }
+      .ig-ex-stat { gap: 10px; }
+      .ig-ex-stat-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .ig-ex-stat-name { font-family: 'Oswald', sans-serif; font-size: 17px; font-weight: 600; letter-spacing: 0.3px; }
+      .ig-ex-stat-diff { font-size: 12px; color: var(--chalk-dim); flex-shrink: 0; }
+      .ig-ex-stat-diff.pos { color: var(--plate-green); }
+      .ig-ex-stat-diff.neg { color: var(--plate-red); }
+      .ig-ex-stat-row { display: flex; align-items: center; gap: 16px; }
+      .ig-ex-stat-facts { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--chalk); }
+      .ig-ex-stat-grid { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 10.5px; color: var(--chalk-dim); border-top: 1px solid var(--glass-border); padding-top: 9px; }
+
       .ig-done-note { flex-direction: row; align-items: center; gap: 12px; font-size: 13px; color: var(--chalk-dim); line-height: 1.5; border-color: rgba(88,164,92,0.3); }
       .ig-done-note-icon { font-size: 24px; flex-shrink: 0; }
       .ig-empty-hero { align-items: center; text-align: center; padding: 34px 22px; gap: 12px; }
