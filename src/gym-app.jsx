@@ -882,9 +882,17 @@ export default function App() {
     [persist],
   );
 
+  const accent =
+    ACCENT_COLORS.find((a) => a.id === data.settings?.accent) ||
+    ACCENT_COLORS[0];
+  const accentStyle = {
+    "--plate-yellow": accent.color,
+    "--accent-rgb": accent.rgb,
+  };
+
   if (!loaded) {
     return (
-      <div className="ig-app">
+      <div className="ig-app" style={accentStyle}>
         <Style />
         <div className="ig-loading">
           <Dumbbell size={28} />
@@ -896,7 +904,7 @@ export default function App() {
 
   if (!data.profile.onboarded) {
     return (
-      <div className="ig-app">
+      <div className="ig-app" style={accentStyle}>
         <Style />
         <div className="ig-phone">
           <Onboarding
@@ -933,9 +941,6 @@ export default function App() {
     );
   }
 
-  const accent =
-    ACCENT_COLORS.find((a) => a.id === data.settings?.accent) ||
-    ACCENT_COLORS[0];
   const soundOn = data.settings?.sound !== false;
   const goTo = (t) => {
     setTab(t);
@@ -944,10 +949,7 @@ export default function App() {
   };
 
   return (
-    <div
-      className="ig-app"
-      style={{ "--plate-yellow": accent.color, "--accent-rgb": accent.rgb }}
-    >
+    <div className="ig-app" style={accentStyle}>
       <Style />
       <div className="ig-phone">
         <header className="ig-header">
@@ -1535,6 +1537,7 @@ function LogTab({ data, update, goTo }) {
         <button
           className="ig-plan-banner"
           onClick={() => setShowStreak((s) => !s)}
+          aria-expanded={showStreak}
         >
           <CalendarDays size={16} />
           <span>
@@ -1544,11 +1547,16 @@ function LogTab({ data, update, goTo }) {
               {todayUnit !== "gk" ? " Einheit" : ""}
             </strong>
           </span>
+          <ChevronRight
+            size={15}
+            className={"ig-banner-chev" + (showStreak ? " open" : "")}
+          />
         </button>
       ) : countdown ? (
         <button
           className="ig-card ig-rest-card"
           onClick={() => setShowStreak((s) => !s)}
+          aria-expanded={showStreak}
         >
           <Moon size={22} className="ig-rest-icon" />
           <div className="ig-rest-body">
@@ -1565,14 +1573,23 @@ function LogTab({ data, update, goTo }) {
               Zeit zur Regeneration — dein Körper baut jetzt Muskeln auf.
             </span>
           </div>
+          <ChevronRight
+            size={15}
+            className={"ig-banner-chev" + (showStreak ? " open" : "")}
+          />
         </button>
       ) : (
         <button
           className="ig-plan-banner rest"
           onClick={() => setShowStreak((s) => !s)}
+          aria-expanded={showStreak}
         >
           <Moon size={16} />
           <span>Heute laut Plan: Ruhetag — Regeneration zählt auch.</span>
+          <ChevronRight
+            size={15}
+            className={"ig-banner-chev" + (showStreak ? " open" : "")}
+          />
         </button>
       )}
 
@@ -1628,22 +1645,28 @@ function LogTab({ data, update, goTo }) {
         )}
       </div>
 
-      <button
-        className="ig-btn-primary wide xl"
-        disabled={queue.length === 0}
-        onClick={() => {
-          setActive(true);
-          playSound("pr", soundOn);
-          buzz([40, 30, 40], hapticsOn);
-        }}
-      >
-        <Play size={20} />
-        {doneExercises >= queue.length && queue.length > 0
-          ? "Extra-Runde starten"
-          : doneExercises > 0
-            ? "Workout fortsetzen"
-            : "Workout starten"}
-      </button>
+      {doneExercises >= queue.length && queue.length > 0 ? (
+        <div className="ig-card ig-done-note">
+          <span className="ig-done-note-icon">🎉</span>
+          <span>
+            Training für heute komplett. Gönn dir die Pause — morgen geht's
+            weiter!
+          </span>
+        </div>
+      ) : (
+        <button
+          className="ig-btn-primary wide xl"
+          disabled={queue.length === 0}
+          onClick={() => {
+            setActive(true);
+            playSound("pr", soundOn);
+            buzz([40, 30, 40], hapticsOn);
+          }}
+        >
+          <Play size={20} />
+          {doneExercises > 0 ? "Workout fortsetzen" : "Workout starten"}
+        </button>
+      )}
 
       {active && (
         <WorkoutMode
@@ -2610,30 +2633,39 @@ function ProgressTab({ data }) {
         </select>
       </div>
 
-      <div className="ig-stat-grid four">
-        <div className="ig-stat">
-          <span className="ig-stat-label">Bestwert</span>
-          <span className="ig-stat-value mono">{best} kg</span>
+      <div className="ig-dash-grid">
+        <div className="ig-card ig-dash-stat">
+          <Trophy size={16} className="ig-dash-icon" />
+          <span className="ig-dash-num mono">{best} kg</span>
+          <span className="ig-dash-label">Bestwert</span>
         </div>
-        <div className="ig-stat">
-          <span className="ig-stat-label">1RM geschätzt</span>
-          <span className="ig-stat-value mono">{Math.round(bestE1)} kg</span>
+        <div className="ig-card ig-dash-stat">
+          <Zap size={16} className="ig-dash-icon" />
+          <span className="ig-dash-num mono">{Math.round(bestE1)} kg</span>
+          <span className="ig-dash-label">1RM geschätzt</span>
         </div>
-        <div className="ig-stat">
-          <span className="ig-stat-label">Einheiten</span>
-          <span className="ig-stat-value mono">{sessions}</span>
+        <div className="ig-card ig-dash-stat">
+          <CalendarDays size={16} className="ig-dash-icon" />
+          <span className="ig-dash-num mono">{sessions}</span>
+          <span className="ig-dash-label">Einheiten</span>
         </div>
-        <div className="ig-stat">
-          <span className="ig-stat-label">Zuwachs</span>
+        <div className="ig-card ig-dash-stat">
+          <TrendingUp size={16} className="ig-dash-icon" />
           <span
-            className={
-              "ig-stat-value mono" +
-              (diff > 0 ? " pos" : diff < 0 ? " neg" : "")
-            }
+            className="ig-dash-num mono"
+            style={{
+              color:
+                diff > 0
+                  ? "var(--plate-green)"
+                  : diff < 0
+                    ? "var(--plate-red)"
+                    : undefined,
+            }}
           >
             {diff > 0 ? "+" : ""}
             {diff} kg
           </span>
+          <span className="ig-dash-label">Zuwachs</span>
         </div>
       </div>
 
@@ -3400,6 +3432,10 @@ function Style() {
       .ig-rest-title { font-size: 13px; font-weight: 600; }
       .ig-rest-count { font-size: 20px; font-weight: 700; color: var(--plate-yellow); }
       .ig-rest-sub { font-size: 11px; color: var(--chalk-dim); line-height: 1.4; }
+      .ig-banner-chev { flex-shrink: 0; margin-left: auto; opacity: 0.6; transition: transform 0.25s var(--ease-out); }
+      .ig-banner-chev.open { transform: rotate(90deg); }
+      .ig-done-note { flex-direction: row; align-items: center; gap: 12px; font-size: 13px; color: var(--chalk-dim); line-height: 1.5; border-color: rgba(88,164,92,0.3); }
+      .ig-done-note-icon { font-size: 24px; flex-shrink: 0; }
       .ig-empty-hero { align-items: center; text-align: center; padding: 34px 22px; gap: 12px; }
       .ig-empty-illu { font-size: 46px; line-height: 1; animation: ig-pop 0.6s var(--ease-spring); }
       .ig-num-pop { display: inline-block; animation: ig-pop 0.35s var(--ease-spring); }
@@ -3529,14 +3565,6 @@ function Style() {
 
       .ig-num { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; line-height: 1; letter-spacing: -0.5px; }
       .ig-caption-sub { font-size: 11px; color: var(--chalk-dim); margin-top: 3px; }
-
-      .ig-stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-      .ig-stat-grid.four { grid-template-columns: repeat(2, 1fr); }
-      .ig-stat { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(12px) saturate(1.2); -webkit-backdrop-filter: blur(12px) saturate(1.2); box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-      .ig-stat-label { font-size: 10px; color: var(--chalk-dim); text-transform: uppercase; letter-spacing: 0.4px; }
-      .ig-stat-value { font-size: 17px; font-weight: 600; }
-      .ig-stat-value.pos { color: var(--plate-green); }
-      .ig-stat-value.neg { color: var(--plate-red); }
 
       .ig-chart-wrap { margin-top: 2px; }
       .ig-legend { display: flex; gap: 16px; font-size: 11px; color: var(--chalk-dim); margin-top: 6px; }
