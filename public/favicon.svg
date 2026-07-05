@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="20" fill="#14161a"/>
-  <rect x="28" y="22" width="8" height="56" rx="4" fill="#e3b23c"/>
-  <rect x="48" y="18" width="8" height="64" rx="4" fill="#e3b23c"/>
-  <rect x="68" y="26" width="8" height="48" rx="4" fill="#e3b23c"/>
-  <rect x="20" y="38" width="60" height="8" rx="4" fill="#e3b23c"/>
-  <circle cx="32" cy="34" r="6" fill="#e3b23c"/>
-  <circle cx="52" cy="30" r="6" fill="#e3b23c"/>
-  <circle cx="72" cy="38" r="6" fill="#e3b23c"/>
+  <rect width="100" height="100" rx="24" fill="#0c0d12"/>
+  <defs>
+    <mask id="ecl">
+      <rect width="100" height="100" fill="#fff"/>
+      <rect x="-15" y="43.5" width="130" height="13" transform="rotate(-32 50 50)" fill="#000"/>
+    </mask>
+  </defs>
+  <circle cx="50" cy="50" r="36" fill="#f2f3f7" mask="url(#ecl)"/>
 </svg>
