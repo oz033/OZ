@@ -3,7 +3,7 @@
    nichts dupliziert die Overview-Zahlen von Home. */
 
 import React, { useState, useMemo } from "react";
-import { CalendarDays, Scale, Trophy, Award } from "lucide-react";
+import { CalendarDays, Scale, Trophy, Award, TrendingUp } from "lucide-react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -13,7 +13,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { CountUp, Sparkline } from "../components/ui.jsx";
+import { CountUp, Sparkline, EmptyState } from "../components/ui.jsx";
 import StreakCalendar from "../components/StreakCalendar.jsx";
 import {
   calcStats,
@@ -27,7 +27,7 @@ import {
 } from "../lib/utils.js";
 import { BADGE_DEFS, MUSCLE_NAME } from "../lib/constants.js";
 
-export default function ProgressTab({ data }) {
+export default function ProgressTab({ data, onStart }) {
   const plans = data.plans || [];
   const [planId, setPlanId] = useState(
     () => getTodayPlan(data)?.id || plans[0]?.id || null,
@@ -68,6 +68,21 @@ export default function ProgressTab({ data }) {
       return { name, item: it, s: exerciseStats(data.logs, name) };
     });
   }, [plan, byId, data.logs]);
+
+  if (stats.totalWorkouts === 0) {
+    return (
+      <div className="ig-tabpane">
+        <h1 className="ig-home-title" style={{ padding: "4px 2px 0" }}>Verlauf</h1>
+        <EmptyState
+          icon={<TrendingUp size={40} />}
+          title="Noch keine Trainings"
+          description="Starte dein erstes Workout, um deine Statistiken, Rekorde und deinen Fortschritt zu sehen."
+          primaryLabel="Erstes Workout starten"
+          onPrimary={onStart}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="ig-tabpane">

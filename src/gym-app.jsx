@@ -15,12 +15,13 @@ import {
 } from "lucide-react";
 import { EclipseMark, SplashScreen } from "./components/brand.jsx";
 
-import { STORAGE_KEY } from "./lib/constants.js";
+import { STORAGE_KEY, blankPlan } from "./lib/constants.js";
 import {
   playSound,
   buzz,
   todayISO,
   getTodayPlan,
+  workoutReadiness,
 } from "./lib/utils.js";
 import { hydrate, freshState } from "./lib/migrate.js";
 import { generatePlans } from "./lib/planGenerator.js";
@@ -62,6 +63,9 @@ export default function App() {
   const [data, setData] = useState(() => freshState());
   const [tab, setTab] = useState("home");
   const [workoutOpen, setWorkoutOpen] = useState(false);
+  // Wenn ein leerer Plan direkt bearbeitet werden soll (statt nur die Liste
+  // zu zeigen), merkt sich das die App hier und reicht es an PlansTab durch.
+  const [autoEditPlanId, setAutoEditPlanId] = useState(null);
   const saveTimer = useRef(null);
 
   useEffect(() => {
@@ -206,14 +210,58 @@ export default function App() {
     playSound("tap", soundOn);
     buzz(15, data.settings?.haptics !== false);
   };
-  // Workout nur mit gefülltem aktivem Plan starten, sonst zum Plan-Tab führen
+  // Sackgassen-Check: NIE blind zum Workout-Screen springen. Erst prüfen ob
+  // ein Plan existiert und ob er Übungen enthält — sonst zum jeweils
+  // richtigen nächsten Schritt führen (Plan anlegen bzw. Plan befüllen).
   const startWorkout = () => {
+    const readiness = workoutReadiness(data);
+    if (readiness.status === "no-plans") {
+      goTo("plan");
+      return;
+    }
+    if (readiness.status === "empty-plan") {
+      setAutoEditPlanId(readiness.planId);
+      goTo("plan");
+      return;
+    }
     if (queue.length === 0) {
+      // Sicherheitsnetz: Übung im Plan referenziert eine gelöschte Bibliothekseinheit
       goTo("plan");
       return;
     }
     setTab("workout");
     setWorkoutOpen(true);
+  };
+
+  // Leeren Plan anlegen und direkt in die Bearbeitung springen — ein Tap statt zwei.
+  const createPlanAndEdit = () => {
+    const plan = blankPlan((data.plans || []).length);
+    update((prev) => ({
+      ...prev,
+      plans: [...(prev.plans || []), plan],
+      activePlanId: prev.activePlanId || plan.id,
+    }));
+    setAutoEditPlanId(plan.id);
+    setTab("plan");
+  };
+
+  // Bestehenden (leeren) Plan direkt zur Bearbeitung öffnen statt nur die Liste zu zeigen
+  const editPlan = (planId) => {
+    setAutoEditPlanId(planId);
+    setTab("plan");
+  };
+
+  // Fertige Vorlage aus dem Profil generieren (Ziel/Level/Equipment bereits bekannt)
+  const createSmartPlanAndGo = () => {
+    update((prev) => {
+      const generated = generatePlans(prev.profile, prev.library || []);
+      return {
+        ...prev,
+        plans: [...generated, ...(prev.plans || [])],
+        activePlanId: generated[0]?.id || prev.activePlanId,
+      };
+    });
+    setTab("plan");
   };
 
   return (
@@ -287,10 +335,20 @@ export default function App() {
                     goTo={goTo}
                     queue={queue}
                     onStart={() => setWorkoutOpen(true)}
+                    onCreatePlan={createPlanAndEdit}
+                    onCreateSmartPlan={createSmartPlanAndGo}
+                    onEditPlan={editPlan}
                   />
                 )}
-                {tab === "plan" && <PlansTab data={data} update={update} />}
-                {tab === "progress" && <ProgressTab data={data} />}
+                {tab === "plan" && (
+                  <PlansTab
+                    data={data}
+                    update={update}
+                    autoOpenPlanId={autoEditPlanId}
+                    onAutoOpenHandled={() => setAutoEditPlanId(null)}
+                  />
+                )}
+                {tab === "progress" && <ProgressTab data={data} onStart={startWorkout} />}
                 {tab === "profile" && <ProfileTab data={data} update={update} goTo={goTo} />}
               </Suspense>
             </motion.div>

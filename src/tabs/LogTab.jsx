@@ -1,8 +1,8 @@
 /* Training-Tab: heutiges Workout, Fortschritt, Start */
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Play, Plus, Moon, ChevronRight, Check } from "lucide-react";
-import { Sparkline } from "../components/ui.jsx";
+import { Play, Moon, ChevronRight, Check, Dumbbell, ListPlus } from "lucide-react";
+import { Sparkline, EmptyState } from "../components/ui.jsx";
 import StreakCalendar from "../components/StreakCalendar.jsx";
 import {
   todayISO,
@@ -11,14 +11,17 @@ import {
   nextTrainingDay,
   playSound,
   buzz,
+  workoutReadiness,
 } from "../lib/utils.js";
 
-export default function LogTab({ data, update, goTo, queue, onStart }) {
+export default function LogTab({ data, update, queue, onStart, onCreatePlan, onCreateSmartPlan, onEditPlan }) {
   const today = todayISO();
   const [showStreak, setShowStreak] = useState(false);
 
   const plan = getTodayPlan(data);
   const restDay = isRestDay(data);
+  const readiness = useMemo(() => workoutReadiness(data), [data]);
+  const profileReady = !!data.profile?.goal;
 
   const setsToday = useMemo(() => {
     const map = {};
@@ -87,6 +90,38 @@ export default function LogTab({ data, update, goTo, queue, onStart }) {
 
   const soundOn = data.settings?.sound !== false;
   const hapticsOn = data.settings?.haptics !== false;
+
+  // Kein Plan oder ein leerer Plan sind KEIN Ruhetag — das war vorher verwechselt
+  // und zeigte fälschlich "Heute: Ruhetag" an. Erst hier klären, dann erst die
+  // eigentliche Trainingsansicht zeigen.
+  if (readiness.status === "no-plans") {
+    return (
+      <div className="ig-tabpane">
+        <EmptyState
+          icon={<Dumbbell size={40} />}
+          title="Du hast noch keinen Trainingsplan"
+          description="Erstelle zuerst einen Trainingsplan, um dein erstes Workout zu starten."
+          primaryLabel="Plan erstellen"
+          onPrimary={onCreatePlan}
+          secondaryLabel={profileReady ? "Vorlage auswählen" : undefined}
+          onSecondary={profileReady ? onCreateSmartPlan : undefined}
+        />
+      </div>
+    );
+  }
+  if (readiness.status === "empty-plan") {
+    return (
+      <div className="ig-tabpane">
+        <EmptyState
+          icon={<ListPlus size={40} />}
+          title={`"${readiness.planName}" hat noch keine Übungen`}
+          description="Füge Übungen zu deinem Plan hinzu, bevor du dein Workout startest."
+          primaryLabel="Übungen hinzufügen"
+          onPrimary={() => onEditPlan(readiness.planId)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="ig-tabpane">
@@ -242,15 +277,6 @@ export default function LogTab({ data, update, goTo, queue, onStart }) {
           >
             <Play size={20} />
             {doneExercises > 0 ? "Workout fortsetzen" : "Workout starten"}
-          </button>
-        )}
-
-        {queue.length === 0 && (
-          <button
-            className="ig-btn-primary wide ghosted"
-            onClick={() => goTo && goTo("plan")}
-          >
-            <Plus size={16} /> Plan mit Übungen füllen
           </button>
         )}
       </div>

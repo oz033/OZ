@@ -1,7 +1,7 @@
 /* Pläne: Manager + Editor + Übungsbibliothek */
 
-import React, { useState, useMemo } from "react";
-import { Plus, Check, ChevronLeft, Search, Sparkles, Pencil, Copy, Trash2, X } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { Plus, Check, ChevronLeft, Search, Sparkles, Pencil, Copy, Trash2, X, ClipboardList } from "lucide-react";
 import {
   PLAN_COLORS,
   PLAN_ICONS,
@@ -9,15 +9,25 @@ import {
   MUSCLE_GROUPS,
   MUSCLE_NAME,
   MUSCLE_ZONE,
+  blankPlan,
 } from "../lib/constants.js";
 import { uid, planStats, relativeDay, todayISO, round1 } from "../lib/utils.js";
 import { generatePlans } from "../lib/planGenerator.js";
+import { EmptyState } from "../components/ui.jsx";
 
-export default function PlansTab({ data, update }) {
+export default function PlansTab({ data, update, autoOpenPlanId, onAutoOpenHandled }) {
   const [editingId, setEditingId] = useState(null);
   const plans = data.plans || [];
   const profileReady = !!data.profile?.goal;
   const today = todayISO();
+
+  // Von außen (z. B. "Workout starten" bei leerem Plan) direkt in die Bearbeitung springen
+  useEffect(() => {
+    if (autoOpenPlanId) {
+      setEditingId(autoOpenPlanId);
+      onAutoOpenHandled?.();
+    }
+  }, [autoOpenPlanId, onAutoOpenHandled]);
 
   const libraryById = useMemo(() => {
     const m = {};
@@ -30,17 +40,26 @@ export default function PlansTab({ data, update }) {
   const setActive = (id) => update((prev) => ({ ...prev, activePlanId: id }));
 
   const createPlan = () => {
-    const plan = {
-      id: "plan-" + uid(),
-      name: "Neuer Plan",
-      color: PLAN_COLORS[plans.length % PLAN_COLORS.length],
-      icon: PLAN_ICONS[plans.length % PLAN_ICONS.length],
-      description: "",
-      days: [],
-      exercises: [],
-    };
-    update((prev) => ({ ...prev, plans: [...(prev.plans || []), plan] }));
+    const plan = blankPlan(plans.length);
+    update((prev) => ({
+      ...prev,
+      plans: [...(prev.plans || []), plan],
+      activePlanId: prev.activePlanId || plan.id,
+    }));
     setEditingId(plan.id);
+  };
+
+  // Für den Empty State: sofort eine fertige Vorlage statt eines leeren Plans,
+  // hier gibt's noch nichts zu überschreiben — daher ohne Bestätigungsdialog.
+  const createFromTemplate = () => {
+    update((prev) => {
+      const generated = generatePlans(prev.profile, prev.library || []);
+      return {
+        ...prev,
+        plans: [...generated, ...(prev.plans || [])],
+        activePlanId: generated[0]?.id || prev.activePlanId,
+      };
+    });
   };
 
   const regenerate = () => {
@@ -91,17 +110,26 @@ export default function PlansTab({ data, update }) {
   const otherPlans = plans.filter((p) => p.id !== activePlan?.id);
   const activeStats = activePlan ? planStats(activePlan, data.logs, libraryById) : null;
 
+  if (plans.length === 0) {
+    return (
+      <div className="ig-tabpane">
+        <h1 className="ig-home-title" style={{ padding: "4px 2px 0" }}>Trainingspläne</h1>
+        <EmptyState
+          icon={<ClipboardList size={40} />}
+          title="Erstelle deinen ersten Trainingsplan"
+          description="Ein Plan legt fest, welche Übungen, Sätze und Wiederholungen dein Workout hat. Dauert keine zwei Minuten."
+          primaryLabel="Plan erstellen"
+          onPrimary={createPlan}
+          secondaryLabel={profileReady ? "Vorlage auswählen" : undefined}
+          onSecondary={profileReady ? createFromTemplate : undefined}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="ig-tabpane">
       <h1 className="ig-home-title" style={{ padding: "4px 2px 0" }}>Trainingspläne</h1>
-
-      {plans.length === 0 && (
-        <div className="ig-card">
-          <p className="ig-empty">
-            Noch keine Pläne. Erstell deinen ersten — dauert keine zwei Minuten.
-          </p>
-        </div>
-      )}
 
       {/* Aktiver Plan: klar dominant, sofort erkennbar als "das ist mein Plan" */}
       {activePlan && (

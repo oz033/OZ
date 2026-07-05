@@ -57,6 +57,9 @@ export default function ProfileTab({ data, update, goTo }) {
   const bmi = h > 0 && w > 0 ? w / (h * h) : null;
   const stats = calcStats(data.logs, data.settings?.weeklyGoal || 3);
   const earnedBadges = BADGE_DEFS.filter((b) => b.check(stats)).length;
+  const hasPlan = (data.plans || []).length > 0;
+  const hasWorkout = stats.totalWorkouts > 0;
+  const hasRecord = stats.prCount > 0;
 
   let category = null,
     color = null;
@@ -141,6 +144,26 @@ export default function ProfileTab({ data, update, goTo }) {
           <ChevronRight size={15} />
         </button>
       </div>
+
+      {/* Erste-Schritte-Checkliste: motiviert neue Nutzer statt leere Statistiken
+          zu zeigen. Verschwindet von selbst, sobald alle drei erreicht sind. */}
+      {(!hasPlan || !hasWorkout || !hasRecord) && (
+        <div className="ig-card ig-onboard-checklist">
+          <div className="ig-field-label">Erste Schritte</div>
+          <button className="ig-check-row" onClick={() => goTo && goTo("plan")} disabled={hasPlan}>
+            <span className={"ig-check-dot" + (hasPlan ? " done" : "")}>{hasPlan ? "✓" : ""}</span>
+            <span>Trainingsplan erstellen</span>
+          </button>
+          <button className="ig-check-row" onClick={() => goTo && goTo("workout")} disabled={hasWorkout}>
+            <span className={"ig-check-dot" + (hasWorkout ? " done" : "")}>{hasWorkout ? "✓" : ""}</span>
+            <span>Erstes Workout absolvieren</span>
+          </button>
+          <button className="ig-check-row" onClick={() => goTo && goTo("progress")} disabled={hasRecord}>
+            <span className={"ig-check-dot" + (hasRecord ? " done" : "")}>{hasRecord ? "✓" : ""}</span>
+            <span>Ersten Rekord erreichen</span>
+          </button>
+        </div>
+      )}
 
       {/* Persönliches: Modus + Alter */}
       <div className="ig-card">

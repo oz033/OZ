@@ -5,6 +5,28 @@ import { motion } from "framer-motion";
 import { REDUCED_MOTION } from "../lib/utils.js";
 import { ZONE_LABEL } from "../lib/constants.js";
 
+/* Hochwertiger Leerzustand: Icon, Erklärung, ein primärer und ein optionaler
+   sekundärer Weg nach vorn. Kein Screen der App darf einfach leer bleiben. */
+export function EmptyState({ icon, title, description, primaryLabel, onPrimary, secondaryLabel, onSecondary }) {
+  return (
+    <div className="ig-empty-state">
+      {icon && <div className="ig-empty-state-icon">{icon}</div>}
+      <h2 className="ig-empty-state-title">{title}</h2>
+      {description && <p className="ig-empty-state-desc">{description}</p>}
+      {primaryLabel && (
+        <button className="ig-btn-primary wide xl" onClick={onPrimary}>
+          {primaryLabel}
+        </button>
+      )}
+      {secondaryLabel && (
+        <button className="ig-btn-primary wide ghosted" onClick={onSecondary}>
+          {secondaryLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* Animierte Zahlen (Count-up) */
 export function CountUp({ value, format = (v) => Math.round(v), duration = 750 }) {
   const [display, setDisplay] = useState(REDUCED_MOTION ? value : 0);

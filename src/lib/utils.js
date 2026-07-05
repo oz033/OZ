@@ -331,6 +331,23 @@ export function isRestDay(data) {
   return !plans.some((p) => (p.days || []).includes(todayKey()));
 }
 
+// Zentrale Sackgassen-Prüfung: bevor irgendwo "Workout starten" navigiert,
+// erst klären WAS überhaupt möglich ist. Ein Klick darf nie blind auf einen
+// leeren/unbrauchbaren Screen führen.
+//   'no-plans'   — es existiert noch gar kein Trainingsplan
+//   'empty-plan' — ein Plan ist aktiv, hat aber keine Übungen
+//   'ready'      — Plan mit Übungen vorhanden, Workout kann starten/fortsetzen
+export function workoutReadiness(data) {
+  const plans = data.plans || [];
+  if (plans.length === 0) return { status: "no-plans" };
+  const plan = getTodayPlan(data);
+  if (!plan) return { status: "no-plans" };
+  if (!plan.exercises || plan.exercises.length === 0) {
+    return { status: "empty-plan", planId: plan.id, planName: plan.name };
+  }
+  return { status: "ready", planId: plan.id };
+}
+
 export function nextTrainingDay(data) {
   const plans = (data.plans || []).filter((p) => (p.days || []).length > 0);
   if (!plans.length) return null;

@@ -1,5 +1,7 @@
 /* Zentrale Daten: Übungen, Bibliothek, Ziele, Badges, Motivation */
 
+import { uid } from "./utils.js";
+
 export const STORAGE_KEY = "ironlog:state";
 
 export const EXERCISE_META = {
@@ -212,6 +214,20 @@ export const LIBRARY_DEFAULT = [
 
 export const PLAN_COLORS = ["#e3b23c", "#c8f04a", "#4aa8f0", "#f0654a", "#b06af0", "#4af0c8"];
 export const PLAN_ICONS = ["●", "◆", "▲", "■", "◐", "○", "◇", "✳"];
+
+// Leerer Plan-Rohling: einzige Quelle für die Plan-Form, damit PlansTab und
+// schnelle Erstellen-Aktionen anderer Tabs nicht divergieren.
+export function blankPlan(index, name = "Neuer Plan") {
+  return {
+    id: "plan-" + uid(),
+    name,
+    color: PLAN_COLORS[index % PLAN_COLORS.length],
+    icon: PLAN_ICONS[index % PLAN_ICONS.length],
+    description: "",
+    days: [],
+    exercises: [],
+  };
+}
 
 export const WEEKDAYS = [
   { key: "mon", label: "Montag", short: "Mo" },
