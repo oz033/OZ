@@ -1186,15 +1186,6 @@ button.ig-overview-col { cursor: pointer; }
 .ig-wo-card-info .ig-plan-badges { justify-content: center; }
 .ig-wo-hint { font-size: 12px; color: var(--text-dim); line-height: 1.35; margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 12px; flex-shrink: 0; }
 .ig-wo-hint.dim { opacity: 0.75; border-style: dashed; }
-/* Note in bottom sheet — stays visible above keyboard via JS translate */
-.ig-wo-bottom {
-  transition: transform 0.18s ease-out;
-  will-change: transform;
-}
-.ig-wo-bottom.note-focus {
-  /* Extra top radius when floating over keyboard */
-  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
-}
 .ig-wo-note-edit {
   width: 100%;
   display: flex;
@@ -1262,7 +1253,7 @@ button.ig-overview-col { cursor: pointer; }
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   color: var(--accent);
 }
-/* Workout bottom chrome — one-hand / thumb zone */
+/* Workout bottom chrome — one-hand / thumb zone; lifts above keyboard when note focused */
 .ig-wo-bottom {
   flex-shrink: 0;
   display: flex;
@@ -1274,6 +1265,11 @@ button.ig-overview-col { cursor: pointer; }
   border-top: 1px solid var(--border, #2a2d3a);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   box-shadow: 0 -8px 28px rgba(0,0,0,0.16);
+  transition: transform 0.18s ease-out;
+  will-change: transform;
+}
+.ig-wo-bottom.note-focus {
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
 }
 /* Compact upper track so controls sit in thumb reach */
 .ig-wo.ig-wo .ig-wo-track-wrap {
