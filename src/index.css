@@ -1209,18 +1209,34 @@ button.ig-overview-col { cursor: pointer; }
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   color: var(--accent);
 }
-/* Workout bottom chrome — safe-bottom only under controls */
+/* Workout bottom chrome — one-hand / thumb zone */
 .ig-wo-bottom {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-4) calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--space-3));
+  padding: var(--space-3) var(--space-3) calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--space-3));
   background: var(--surface, #161822);
   color: var(--text, #f2f3f7);
   border-top: 1px solid var(--border, #2a2d3a);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   box-shadow: 0 -8px 28px rgba(0,0,0,0.16);
+}
+/* Compact upper track so controls sit in thumb reach */
+.ig-wo.ig-wo .ig-wo-track-wrap {
+  min-height: 140px;
+  flex: 1 1 36%;
+}
+.ig-wo .ig-ex-demo-frame {
+  width: 132px;
+  height: 132px;
+}
+.ig-wo .ig-wo-ex-name {
+  font-size: 20px;
+}
+.ig-wo-onehand {
+  gap: 10px;
+  padding-top: 12px;
 }
 .ig-wo-empty {
   flex: 1;
@@ -1233,11 +1249,70 @@ button.ig-overview-col { cursor: pointer; }
   color: var(--text, #f2f3f7);
   text-align: center;
 }
-.ig-wo-sets { display: flex; gap: 7px; justify-content: center; padding-top: 0; }
+.ig-wo-sets { display: flex; gap: 8px; justify-content: center; padding-top: 0; }
 .ig-wo-cta {
   background: var(--accent) !important;
   box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 35%, transparent);
   letter-spacing: 0.01em;
+  min-height: 56px !important;
+  height: 56px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  border-radius: 16px !important;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.ig-wo-cta:active:not(:disabled) {
+  transform: scale(0.98);
+}
+/* 1-Tap: last session load */
+.ig-wo-last-load {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ig-wo-last-load:active {
+  transform: scale(0.98);
+}
+.ig-wo-last-load.active {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+}
+.ig-wo-last-load-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.ig-wo-last-load-val {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 700;
+  min-width: 0;
+}
+.ig-wo-last-load-cta {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.ig-wo-last-load.active .ig-wo-last-load-cta {
+  color: var(--success, #34b36a);
 }
 .ig-prog-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--border); transition: all 0.35s var(--ease-spring); }
 @keyframes ig-dot-pop { 0% { transform: scale(0.6); } 55% { transform: scale(1.35); } 100% { transform: scale(1.1); } }
@@ -1245,9 +1320,37 @@ button.ig-overview-col { cursor: pointer; }
 .ig-prog-dot.next { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.2); }
 .ig-steplabel { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-dim); font-weight: 700; }
 .ig-steplabel-controls { display: flex; align-items: center; gap: 6px; background: var(--surface-2); border-radius: var(--radius-md); padding: 3px; width: 100%; justify-content: center; }
-.ig-step-mini { background: none; border: none; color: var(--text-dim); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: var(--radius-sm); }
+.ig-step-mini { background: none; border: none; color: var(--text-dim); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: var(--radius-sm); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .ig-step-mini:active { background: var(--border); }
 .ig-step-val { font-size: 18px; font-weight: 700; min-width: 42px; text-align: center; }
+/* Large steppers for one-hand gym use */
+.ig-wo-onehand .ig-step-lg {
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  min-height: 52px;
+}
+.ig-wo-onehand .ig-step-lg .ig-step-mini {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  color: var(--text);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg) 35%, transparent);
+}
+.ig-wo-onehand .ig-step-lg .ig-step-mini:active {
+  background: color-mix(in srgb, var(--accent) 22%, var(--border));
+  color: var(--accent);
+}
+.ig-wo-onehand .ig-step-lg .ig-step-val {
+  font-size: 22px;
+  min-width: 56px;
+  font-weight: 700;
+}
+.ig-wo-steppers {
+  gap: 10px;
+}
 
 .ig-wo-rest { position: absolute; inset: 0; z-index: 110; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; animation: ig-fade-up 0.25s var(--ease-out); }
 .ig-wo-go { font-family: var(--font-display); font-size: 40px; font-weight: 700; animation: ig-pop 0.5s var(--ease-spring); }

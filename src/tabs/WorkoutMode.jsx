@@ -229,6 +229,19 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
         .sort((a, b) => b.date.localeCompare(a.date))[0] || null,
     [logsForExercise, today],
   );
+  /** Letzter Arbeitssatz (kg × Wdh.) — 1-Tap im Ein-Hand-Flow */
+  const lastLoad = useMemo(() => {
+    const sets = lastSession?.sets || [];
+    if (!sets.length) return null;
+    const s = sets[sets.length - 1];
+    const w = Number(s.weight);
+    const r = Number(s.reps);
+    if (!Number.isFinite(w) && !Number.isFinite(r)) return null;
+    return {
+      weight: Number.isFinite(w) ? w : 0,
+      reps: Number.isFinite(r) && r > 0 ? r : item?.reps || 10,
+    };
+  }, [lastSession, item?.reps]);
   const bestBefore = useMemo(() => {
     let best = 0;
     logsForExercise
@@ -252,6 +265,19 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
     setReps(s.reps);
     setSuggestion(s.bump ? s : null);
   }, [exercise]); // eslint-disable-line
+
+  const applyLastLoad = () => {
+    if (!lastLoad) return;
+    setWeight(lastLoad.weight);
+    setReps(lastLoad.reps);
+    playSound("tap", soundOn);
+    buzz(20, hapticsOn);
+  };
+
+  const lastMatchesInput =
+    lastLoad &&
+    Number(weight) === Number(lastLoad.weight) &&
+    Number(reps) === Number(lastLoad.reps);
 
   // Kompakter Chip: Smart-Coach-Steigerung oder nächster runder Meilenstein.
   // Keine Redundanz zu Satz-Dots / PR in den Mini-Stats.
@@ -813,16 +839,9 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
                       <span className="ig-badge dim">Ziel {it.weight} kg</span>
                     )}
                   </div>
-                  {active && (
+                  {active && bestBefore > 0 && (
                     <div className="ig-wo-mini-stats mono">
-                      {lastSession?.sets?.length > 0 && (
-                        <span>
-                          Zuletzt:{" "}
-                          {lastSession.sets[lastSession.sets.length - 1]?.weight ?? "–"}{" "}
-                          kg
-                        </span>
-                      )}
-                      {bestBefore > 0 && <span>PR: {bestBefore} kg</span>}
+                      <span>PR: {bestBefore} kg</span>
                     </div>
                   )}
                 </div>
@@ -834,22 +853,19 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
                   image={m?.image}
                 />
               )}
-              {active && m?.hint && (
-                <p className="ig-wo-hint">{shortTip(m.hint)}</p>
+              {active && (it.note || m?.hint) && (
+                <p className="ig-wo-hint note">
+                  {shortTip(it.note?.trim() || m?.hint, 64)}
+                </p>
               )}
-              {active &&
-                it.note &&
-                it.note.trim() &&
-                it.note.trim() !== String(m?.hint || "").trim() && (
-                  <p className="ig-wo-hint note">{shortTip(it.note)}</p>
-                )}
             </div>
           );
         })}
       </div>
       </div>
 
-      <div className="ig-wo-bottom">
+      {/* Ein-Hand-Zone: alles Wichtige im Daumenbereich */}
+      <div className="ig-wo-bottom ig-wo-onehand">
         <div className="ig-wo-sets">
           {Array.from({ length: targetSets }, (_, i) => (
             <span
@@ -867,38 +883,77 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
             {milestone.label}
           </span>
         )}
-        <div className="ig-set-inputs two">
+        {lastLoad && (
+          <button
+            type="button"
+            className={
+              "ig-wo-last-load" + (lastMatchesInput ? " active" : "")
+            }
+            onClick={applyLastLoad}
+            aria-label={`Zuletzt ${lastLoad.weight} Kilo mal ${lastLoad.reps} übernehmen`}
+          >
+            <span className="ig-wo-last-load-kicker">Zuletzt</span>
+            <span className="ig-wo-last-load-val mono">
+              {lastLoad.weight} kg × {lastLoad.reps}
+            </span>
+            <span className="ig-wo-last-load-cta">
+              {lastMatchesInput ? "Aktiv" : "Übernehmen"}
+            </span>
+          </button>
+        )}
+        <div className="ig-set-inputs two ig-wo-steppers">
           <div className="ig-num-field">
             <span className="ig-steplabel">Gewicht (kg)</span>
-            <div className="ig-steplabel-controls">
-              <button className="ig-step-mini" onClick={() => step(setWeight, weight, -2.5, 0)}>
-                <Minus size={16} />
+            <div className="ig-steplabel-controls ig-step-lg">
+              <button
+                type="button"
+                className="ig-step-mini"
+                onClick={() => step(setWeight, weight, -2.5, 0)}
+                aria-label="Gewicht verringern"
+              >
+                <Minus size={22} strokeWidth={2.25} />
               </button>
               <span className="ig-step-val mono">{weight}</span>
-              <button className="ig-step-mini" onClick={() => step(setWeight, weight, 2.5, 0)}>
-                <Plus size={16} />
+              <button
+                type="button"
+                className="ig-step-mini"
+                onClick={() => step(setWeight, weight, 2.5, 0)}
+                aria-label="Gewicht erhöhen"
+              >
+                <Plus size={22} strokeWidth={2.25} />
               </button>
             </div>
           </div>
           <div className="ig-num-field">
             <span className="ig-steplabel">Wdh.</span>
-            <div className="ig-steplabel-controls">
-              <button className="ig-step-mini" onClick={() => step(setReps, reps, -1, 1)}>
-                <Minus size={16} />
+            <div className="ig-steplabel-controls ig-step-lg">
+              <button
+                type="button"
+                className="ig-step-mini"
+                onClick={() => step(setReps, reps, -1, 1)}
+                aria-label="Wiederholungen verringern"
+              >
+                <Minus size={22} strokeWidth={2.25} />
               </button>
               <span className="ig-step-val mono">{reps}</span>
-              <button className="ig-step-mini" onClick={() => step(setReps, reps, 1, 1)}>
-                <Plus size={16} />
+              <button
+                type="button"
+                className="ig-step-mini"
+                onClick={() => step(setReps, reps, 1, 1)}
+                aria-label="Wiederholungen erhöhen"
+              >
+                <Plus size={22} strokeWidth={2.25} />
               </button>
             </div>
           </div>
         </div>
         <button
+          type="button"
           className="ig-btn-primary wide xl ig-wo-cta"
           disabled={doneCount >= targetSets}
           onClick={completeSet}
         >
-          <Check size={20} />
+          <Check size={22} strokeWidth={2.5} />
           {doneCount >= targetSets ? "Übung fertig" : "Satz abschließen"}
         </button>
       </div>
