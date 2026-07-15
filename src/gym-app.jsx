@@ -22,6 +22,7 @@ import {
   todayISO,
   getTodayPlan,
   workoutReadiness,
+  trimExercisesToDuration,
 } from "./lib/utils.js";
 import { hydrate, freshState, prepareForStorage } from "./lib/migrate.js";
 import { generatePlans } from "./lib/planGenerator.js";
@@ -162,7 +163,7 @@ export default function App() {
   };
   const reduced = cfg.motion === "reduced";
 
-  // Workout-Queue: Übungen des heutigen Plans inkl. Vorgaben
+  // Workout-Queue: heutiger Plan, zugeschnitten auf gewählte Session-Dauer
   const queue = useMemo(() => {
     const plan = getTodayPlan(data);
     if (!plan) return [];
@@ -170,7 +171,7 @@ export default function App() {
     (data.library || []).forEach((e) => {
       byId[e.id] = e;
     });
-    return plan.exercises
+    const full = plan.exercises
       .map((item) => {
         const entry = byId[item.exerciseId];
         if (!entry) return null;
@@ -185,6 +186,12 @@ export default function App() {
         };
       })
       .filter(Boolean);
+    const sessionMin =
+      data.settings?.sessionMinutes != null
+        ? data.settings.sessionMinutes
+        : data.profile?.duration ?? 45;
+    const rest = data.settings?.restSeconds ?? 90;
+    return trimExercisesToDuration(full, sessionMin, rest);
   }, [data]);
 
   if (!loaded) {

@@ -27,6 +27,8 @@ export const DEFAULT_SETTINGS = {
   sound: true,
   haptics: true,
   weeklyGoal: 3,
+  /** Ziel-Dauer einer Session in Minuten; 0 = ganzer Plan */
+  sessionMinutes: 45,
   theme: "dark",
   waterGoal: 0, // 0 = aus, sonst ml/Tag
   kcalGoal: 0, // 0 = aus, sonst kcal/Tag

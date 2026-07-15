@@ -373,6 +373,43 @@ export function estimateDuration(exercises, defaultRest = 90) {
   return Math.max(5, Math.round(seconds / 60 / 5) * 5);
 }
 
+/** Sekunden-Budget pro Übung (Arbeit + Pause) */
+export function exerciseSeconds(e, defaultRest = 90) {
+  return (e?.sets || 3) * (45 + (e?.rest ?? defaultRest));
+}
+
+/**
+ * Schneidet die Queue so zu, dass die geschätzte Dauer ≈ targetMin bleibt.
+ * Mindestens 1 Übung. targetMin ≤ 0 → unverändert (ganzer Plan).
+ */
+export function trimExercisesToDuration(exercises, targetMin, defaultRest = 90) {
+  const list = Array.isArray(exercises) ? exercises : [];
+  if (!list.length) return [];
+  const budget = Number(targetMin);
+  if (!budget || budget <= 0) return list;
+
+  const budgetSec = budget * 60;
+  const out = [];
+  let used = 0;
+  for (const e of list) {
+    const cost = exerciseSeconds(e, defaultRest);
+    // Erste Übung immer; danach nur wenn Budget (mit 8 % Puffer) reicht
+    if (out.length > 0 && used + cost > budgetSec * 1.08) break;
+    out.push(e);
+    used += cost;
+  }
+  return out.length ? out : list.slice(0, 1);
+}
+
+/** Feste Auswahl für Session-Dauer (UI-Chips) */
+export const SESSION_DURATION_OPTIONS = [
+  { min: 30, label: "30 Min" },
+  { min: 45, label: "45 Min" },
+  { min: 60, label: "60 Min" },
+  { min: 90, label: "90 Min" },
+  { min: 0, label: "Alles" },
+];
+
 // Tages-Zitat deterministisch wählen (wechselt täglich, gender-Pool gemischt)
 export function dailyQuote(quotes, gender) {
   const pool = [...quotes.any, ...(quotes[gender] || [])];

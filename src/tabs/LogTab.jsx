@@ -12,6 +12,8 @@ import {
   playSound,
   buzz,
   workoutReadiness,
+  estimateDuration,
+  SESSION_DURATION_OPTIONS,
 } from "../lib/utils.js";
 
 export default function LogTab({ data, update, queue, onStart, onCreatePlan, onCreateSmartPlan, onEditPlan }) {
@@ -22,6 +24,25 @@ export default function LogTab({ data, update, queue, onStart, onCreatePlan, onC
   const restDay = isRestDay(data);
   const readiness = useMemo(() => workoutReadiness(data), [data]);
   const profileReady = !!data.profile?.goal;
+  const restDefault = data.settings?.restSeconds ?? 90;
+  const sessionMinutes =
+    data.settings?.sessionMinutes != null
+      ? data.settings.sessionMinutes
+      : data.profile?.duration ?? 45;
+  const estMin = estimateDuration(queue, restDefault);
+  const planExerciseCount = plan?.exercises?.length || 0;
+
+  const setSessionMinutes = (min) => {
+    update((prev) => ({
+      ...prev,
+      settings: { ...prev.settings, sessionMinutes: min },
+      // Sync profile duration for Smart-Plan generation (0 = keep last non-zero / 45)
+      profile: {
+        ...prev.profile,
+        duration: min > 0 ? min : prev.profile?.duration || 45,
+      },
+    }));
+  };
 
   const setsToday = useMemo(() => {
     const map = {};
@@ -212,6 +233,34 @@ export default function LogTab({ data, update, queue, onStart, onCreatePlan, onC
         </div>
       )}
 
+      {/* Session-Dauer: steuert, wie viele Übungen ins heutige Workout passen */}
+      <div className="ig-card ig-session-duration">
+        <div className="ig-session-duration-head">
+          <span className="ig-field-label" style={{ margin: 0 }}>
+            Workout-Dauer
+          </span>
+          <span className="ig-session-duration-est mono">
+            ≈ {estMin} Min
+            {planExerciseCount > 0 &&
+              ` · ${queue.length}/${planExerciseCount} Übungen`}
+          </span>
+        </div>
+        <div className="ig-mode-toggle ig-session-duration-chips" role="group" aria-label="Ziel-Dauer">
+          {SESSION_DURATION_OPTIONS.map((opt) => (
+            <button
+              key={opt.min}
+              type="button"
+              className={
+                "ig-chip sm" + (sessionMinutes === opt.min ? " active" : "")
+              }
+              onClick={() => setSessionMinutes(opt.min)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="ig-card">
         <div className="ig-field-label">
           {doneExercises >= queue.length && queue.length > 0
@@ -220,7 +269,7 @@ export default function LogTab({ data, update, queue, onStart, onCreatePlan, onC
               ? "Fast geschafft — nur noch eine Übung"
               : queue.length - doneExercises === 2 && doneExercises > 0
                 ? "Fast geschafft — nur noch zwei Übungen"
-                : `Heutiges Workout · ${queue.length} Übungen`}
+                : `Heutiges Workout · ${queue.length} Übungen · ≈ ${estMin} Min`}
         </div>
         <ul className="ig-queue-list">
           {queue.map((it, i) => {
