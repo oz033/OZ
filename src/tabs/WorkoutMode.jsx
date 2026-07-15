@@ -105,6 +105,8 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
   const [weight, setWeight] = useState(20);
   const [reps, setReps] = useState(10);
   const [suggestion, setSuggestion] = useState(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const noteSaveTimer = useRef(null);
 
   // Live refs for swipe handlers (avoid stale closures / React re-renders mid-drag)
   const idxRef = useRef(firstOpen === -1 ? 0 : firstOpen);
@@ -264,7 +266,51 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
     setWeight(s.weight);
     setReps(s.reps);
     setSuggestion(s.bump ? s : null);
+    setNoteDraft(item?.note || "");
   }, [exercise]); // eslint-disable-line
+
+  /** Eigene Notiz pro Übung im Plan speichern (Gerät, Sitz, Griff, …) */
+  const persistExerciseNote = useCallback(
+    (text) => {
+      const eid = item?.entry?.id;
+      if (!eid) return;
+      const note = String(text || "").trim();
+      update((prev) => ({
+        ...prev,
+        plans: (prev.plans || []).map((p) => ({
+          ...p,
+          exercises: (p.exercises || []).map((e) =>
+            e.exerciseId === eid ? { ...e, note } : e,
+          ),
+        })),
+      }));
+    },
+    [item?.entry?.id, update],
+  );
+
+  const onNoteChange = (val) => {
+    setNoteDraft(val);
+    if (noteSaveTimer.current) clearTimeout(noteSaveTimer.current);
+    // Debounce: speichern während Tippen, ohne jeden Keystroke
+    noteSaveTimer.current = setTimeout(() => {
+      persistExerciseNote(val);
+    }, 450);
+  };
+
+  const onNoteBlur = () => {
+    if (noteSaveTimer.current) {
+      clearTimeout(noteSaveTimer.current);
+      noteSaveTimer.current = null;
+    }
+    persistExerciseNote(noteDraft);
+  };
+
+  useEffect(
+    () => () => {
+      if (noteSaveTimer.current) clearTimeout(noteSaveTimer.current);
+    },
+    [],
+  );
 
   const applyLastLoad = () => {
     if (!lastLoad) return;
@@ -850,10 +896,30 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
                   image={m?.image}
                 />
               )}
-              {active && (it.note || m?.hint) && (
-                <p className="ig-wo-hint note">
-                  {shortTip(it.note?.trim() || m?.hint, 64)}
-                </p>
+              {active && m?.hint && !noteDraft.trim() && (
+                <p className="ig-wo-hint dim">{shortTip(m.hint, 72)}</p>
+              )}
+              {active && (
+                <div className="ig-wo-note-edit" data-no-swipe>
+                  <label className="ig-wo-note-label" htmlFor="ig-wo-note">
+                    Deine Notiz
+                  </label>
+                  <textarea
+                    id="ig-wo-note"
+                    className="ig-wo-note-input"
+                    rows={2}
+                    enterKeyHint="done"
+                    value={noteDraft}
+                    onChange={(ev) => onNoteChange(ev.target.value)}
+                    onBlur={onNoteBlur}
+                    placeholder={
+                      m?.hint
+                        ? "Eigene Notiz (z. B. Sitz 4 · Pin 7)…"
+                        : "z. B. Sitz 4 · Pin 7 · Griff eng"
+                    }
+                    maxLength={160}
+                  />
+                </div>
               )}
             </div>
           );
