@@ -1253,7 +1253,7 @@ button.ig-overview-col { cursor: pointer; }
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   color: var(--accent);
 }
-/* Workout bottom chrome — one-hand / thumb zone; lifts above keyboard when note focused */
+/* Workout bottom chrome — one-hand / thumb zone (no keyboard transform — Safari owns that) */
 .ig-wo-bottom {
   flex-shrink: 0;
   display: flex;
@@ -1265,11 +1265,10 @@ button.ig-overview-col { cursor: pointer; }
   border-top: 1px solid var(--border, #2a2d3a);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   box-shadow: 0 -8px 28px rgba(0,0,0,0.16);
-  transition: transform 0.18s ease-out;
-  will-change: transform;
 }
 .ig-wo-bottom.note-focus {
-  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+  /* Compact while typing: slightly stronger edge, no vertical jump */
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.22);
 }
 /* Compact upper track so controls sit in thumb reach */
 .ig-wo.ig-wo .ig-wo-track-wrap {

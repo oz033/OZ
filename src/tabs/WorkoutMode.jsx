@@ -109,7 +109,6 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
   const [noteFocused, setNoteFocused] = useState(false);
   const noteSaveTimer = useRef(null);
   const noteInputRef = useRef(null);
-  const bottomRef = useRef(null);
 
   // Live refs for swipe handlers (avoid stale closures / React re-renders mid-drag)
   const idxRef = useRef(firstOpen === -1 ? 0 : firstOpen);
@@ -306,55 +305,12 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
       noteSaveTimer.current = null;
     }
     persistExerciseNote(noteDraft);
-    // Keyboard gone — reset bottom offset
-    if (bottomRef.current) {
-      bottomRef.current.style.transform = "";
-    }
   };
 
+  // iOS: Safari handles keyboard; do NOT translate the sheet (double-lift bug)
   const onNoteFocus = () => {
     setNoteFocused(true);
-    // Keep field above iOS keyboard: lift bottom sheet with visualViewport
-    const lift = () => {
-      const vv = window.visualViewport;
-      if (!vv || !bottomRef.current) return;
-      const covered = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      // Move sheet up by keyboard overlap so the note row stays visible
-      bottomRef.current.style.transform =
-        covered > 0 ? `translate3d(0, -${covered}px, 0)` : "";
-      try {
-        noteInputRef.current?.scrollIntoView({
-          block: "nearest",
-          behavior: "smooth",
-        });
-      } catch {
-        /* ignore */
-      }
-    };
-    // iOS keyboard animates — remeasure a few times
-    requestAnimationFrame(lift);
-    setTimeout(lift, 80);
-    setTimeout(lift, 280);
-    setTimeout(lift, 480);
   };
-
-  useEffect(() => {
-    if (!noteFocused) return;
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const onResize = () => {
-      if (!bottomRef.current) return;
-      const covered = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      bottomRef.current.style.transform =
-        covered > 0 ? `translate3d(0, -${covered}px, 0)` : "";
-    };
-    vv.addEventListener("resize", onResize);
-    vv.addEventListener("scroll", onResize);
-    return () => {
-      vv.removeEventListener("resize", onResize);
-      vv.removeEventListener("scroll", onResize);
-    };
-  }, [noteFocused]);
 
   useEffect(
     () => () => {
@@ -959,9 +915,8 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
       </div>
       </div>
 
-      {/* Ein-Hand-Zone: Exit X + Notiz + Steppers + CTA (Notiz hier = über Tastatur sichtbar) */}
+      {/* Ein-Hand-Zone: Exit X + Notiz + Steppers + CTA — Safari moves keyboard, no JS lift */}
       <div
-        ref={bottomRef}
         className={
           "ig-wo-bottom ig-wo-onehand" + (noteFocused ? " note-focus" : "")
         }
