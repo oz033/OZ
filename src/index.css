@@ -41,9 +41,15 @@ html, body, #root {
   --safe-left: var(--sal, env(safe-area-inset-left, 0px));
   /* Bottom dock: floating pill + home-indicator zone painted as app bg */
   --dock-pill-h: 58px;
-  --dock-gap: 10px;
-  /* Extra 18px = min bottom air + safe-area (safe-bottom may be 0 on some WebViews) */
-  --tabbar-stack: calc(var(--dock-pill-h) + var(--dock-gap) + var(--safe-bottom) + 18px);
+  --dock-gap: 12px;
+  /*
+   * Space reserved at end of .ig-main so last controls (Export, Workout starten)
+   * clear the floating pill completely — was too tight and got clipped on iPhone.
+   * dock = gap + pill + safe-area + comfort breathing room
+   */
+  --tabbar-stack: calc(
+    var(--dock-pill-h) + var(--dock-gap) + var(--safe-bottom) + 40px
+  );
 
   /* Status-Farben (themenunabhaengig) */
   --success: #34b36a;
@@ -409,7 +415,12 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding-bottom: 8px;
+  /* Extra end space inside scroll content (on top of .ig-main padding) */
+  padding-bottom: 28px;
+}
+/* Last block always fully clears the floating dock */
+.ig-tabpane > :last-child {
+  margin-bottom: 4px;
 }
 .ig-loading {
   display: flex;
@@ -868,8 +879,7 @@ button.ig-overview-col { cursor: pointer; }
 
 /*
  * Sticky Start-CTA sits at the bottom of .ig-main's scrollport (bottom: 0).
- * Main already reserves --tabbar-stack, so the button rests just above the dock
- * instead of floating mid-list (old bottom: 92px bug on iPhone).
+ * Main already reserves --tabbar-stack so the button clears the floating dock.
  */
 .ig-sticky-cta {
   position: sticky;
@@ -878,12 +888,12 @@ button.ig-overview-col { cursor: pointer; }
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 8px;
-  padding: 12px 0 10px;
+  margin-top: 12px;
+  padding: 14px 0 12px;
   background: linear-gradient(
     to bottom,
     color-mix(in srgb, var(--bg) 0%, transparent) 0%,
-    var(--bg) 36%,
+    var(--bg) 40%,
     var(--bg) 100%
   );
 }
@@ -1218,8 +1228,22 @@ button.ig-overview-col { cursor: pointer; }
 .ig-active-plan-num { font-size: 15px; font-weight: 700; }
 .ig-active-plan-label { font-size: 10px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
 .ig-active-plan-preview { display: flex; flex-wrap: wrap; gap: 6px; }
-.ig-plan-add-row { display: flex; gap: 10px; }
-.ig-plan-add-row .ig-btn-primary { flex: 1; }
+.ig-plan-add-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  /* Keep Export/Import fully visible above dock when card is last */
+  margin-top: 4px;
+  padding-bottom: 2px;
+}
+.ig-plan-add-row .ig-btn-primary {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px; /* iOS tap target, not half-clipped */
+}
+.ig-profile-backup-row {
+  margin-top: 10px;
+}
 
 .ig-plan-list { display: flex; flex-direction: column; gap: 8px; }
 .ig-plan-card { display: flex; align-items: center; gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--plan-color, var(--accent)); border-radius: var(--radius-md); padding: 4px 8px 4px 0; transition: border-color 0.2s; }

@@ -297,11 +297,15 @@ export default function ProfileTab({ data, update, goTo }) {
           OZGYM speichert alles nur auf diesem Gerät. Exportiere regelmäßig ein Backup,
           um beim Gerätewechsel nichts zu verlieren.
         </p>
-        <div className="ig-plan-add-row">
-          <button className="ig-btn-primary wide ghosted" onClick={exportData}>
+        <div className="ig-plan-add-row ig-profile-backup-row">
+          <button type="button" className="ig-btn-primary wide ghosted" onClick={exportData}>
             <Download size={15} /> Exportieren
           </button>
-          <button className="ig-btn-primary wide ghosted" onClick={() => fileInputRef.current?.click()}>
+          <button
+            type="button"
+            className="ig-btn-primary wide ghosted"
+            onClick={() => fileInputRef.current?.click()}
+          >
             <Upload size={15} /> Importieren
           </button>
         </div>
