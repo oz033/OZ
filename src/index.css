@@ -680,15 +680,46 @@ html, body, #root {
   margin: 0;
   padding: 2px 2px 0;
 }
-.ig-week-goal { padding: 10px 12px; }
-.ig-week-goal-row {
+/* Screen title row with primary actions (never under bottom dock) */
+.ig-screen-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
+  padding: 2px 0 4px;
 }
-.ig-week-goal-chips { flex-shrink: 0; }
+.ig-screen-head .ig-screen-title {
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+}
+.ig-screen-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.ig-plan-new-btn {
+  height: 40px;
+  padding: 0 14px;
+  font-size: 13px;
+  border-radius: 12px;
+  gap: 6px;
+  white-space: nowrap;
+  /* Always tappable above dock */
+  position: relative;
+  z-index: 6;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.ig-screen-head-actions .ig-chip.sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  box-sizing: border-box;
+}
 .ig-home-eyebrow { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
 .ig-home-title { font-family: var(--font-display); font-size: 32px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.1; margin: 0; }
 .ig-home-sub { font-size: 14px; color: var(--text-dim); line-height: 1.5; margin: 0; }

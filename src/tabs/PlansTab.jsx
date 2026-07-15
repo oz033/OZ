@@ -113,7 +113,9 @@ export default function PlansTab({ data, update, autoOpenPlanId, onAutoOpenHandl
   if (plans.length === 0) {
     return (
       <div className="ig-tabpane">
-        <h1 className="ig-screen-title">Pläne</h1>
+        <div className="ig-screen-head">
+          <h1 className="ig-screen-title">Pläne</h1>
+        </div>
         <EmptyState
           icon={<ClipboardList size={36} />}
           title="Noch kein Plan"
@@ -127,32 +129,29 @@ export default function PlansTab({ data, update, autoOpenPlanId, onAutoOpenHandl
     );
   }
 
-  const patchSettings = (fields) =>
-    update((prev) => ({ ...prev, settings: { ...prev.settings, ...fields } }));
-  const weeklyGoal = data.settings?.weeklyGoal || 3;
-
   return (
     <div className="ig-tabpane">
-      <h1 className="ig-screen-title">Pläne</h1>
-
-      {/* Wochenziel — ruhige Chip-Leiste, kein Extra-Textblock */}
-      <div className="ig-card ig-week-goal">
-        <div className="ig-week-goal-row">
-          <span className="ig-field-label" style={{ margin: 0 }}>
-            Tage / Woche
-          </span>
-          <div className="ig-mode-toggle ig-week-goal-chips">
-            {[2, 3, 4, 5, 6].map((g) => (
-              <button
-                key={g}
-                type="button"
-                className={"ig-chip sm" + (weeklyGoal === g ? " active" : "")}
-                onClick={() => patchSettings({ weeklyGoal: g })}
-              >
-                {g}×
-              </button>
-            ))}
-          </div>
+      {/* Title + Neuer Plan above the fold — never under bottom dock */}
+      <div className="ig-screen-head">
+        <h1 className="ig-screen-title">Pläne</h1>
+        <div className="ig-screen-head-actions">
+          {profileReady && (
+            <button
+              type="button"
+              className="ig-chip sm"
+              onClick={regenerate}
+              aria-label="Smart-Plan erstellen"
+            >
+              <Sparkles size={14} /> Smart
+            </button>
+          )}
+          <button
+            type="button"
+            className="ig-btn-primary ig-plan-new-btn"
+            onClick={createPlan}
+          >
+            <Plus size={16} /> Neuer Plan
+          </button>
         </div>
       </div>
 
@@ -260,17 +259,6 @@ export default function PlansTab({ data, update, autoOpenPlanId, onAutoOpenHandl
           </div>
         </div>
       )}
-
-      <div className="ig-plan-add-row">
-        <button className="ig-btn-primary wide ghosted" onClick={createPlan}>
-          <Plus size={16} /> Neuer Plan
-        </button>
-        {profileReady && (
-          <button className="ig-btn-primary wide ghosted" onClick={regenerate}>
-            <Sparkles size={15} /> Smart-Plan
-          </button>
-        )}
-      </div>
 
       {editing && (
         <PlanEditor
