@@ -11,6 +11,8 @@ export default function ExerciseDemo({
   gif,
   image,
   className = "",
+  /** compact: small thumb only (for info header next to title) */
+  compact = false,
 }) {
   const looked = findExerciseMedia(exerciseName);
   const gifUrl = gif || looked?.gifUrl;
@@ -19,6 +21,20 @@ export default function ExerciseDemo({
   const src = !failed ? gifUrl || imageUrl : imageUrl && imageUrl !== gifUrl ? imageUrl : null;
 
   if (!src) {
+    if (compact) {
+      return (
+        <div
+          className={
+            "ig-ex-demo compact empty" + (className ? ` ${className}` : "")
+          }
+          aria-hidden="true"
+        >
+          <div className="ig-ex-demo-frame">
+            <span className="ig-ex-demo-compact-ph">?</span>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className={"ig-ex-demo empty" + (className ? ` ${className}` : "")}>
         <div className="ig-ex-demo-fallback">
@@ -27,6 +43,23 @@ export default function ExerciseDemo({
           <span className="ig-ex-demo-fallback-hint">
             Kein Demo-Clip — trotzdem trainieren.
           </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div className={"ig-ex-demo compact" + (className ? ` ${className}` : "")}>
+        <div className="ig-ex-demo-frame">
+          <img
+            className="ig-ex-demo-gif"
+            src={src}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            onError={() => setFailed(true)}
+          />
         </div>
       </div>
     );

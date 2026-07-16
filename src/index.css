@@ -1454,13 +1454,57 @@ button.ig-overview-col { cursor: pointer; }
   letter-spacing: 0.06em;
   color: var(--accent);
 }
+.ig-wo-guide-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
 .ig-wo-guide-title {
   margin: 0;
+  flex: 1;
+  min-width: 0;
   font-family: var(--font-display);
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.3px;
   line-height: 1.15;
+}
+/* Small exercise GIF next to title in info sheet */
+.ig-ex-demo.compact {
+  flex-shrink: 0;
+  margin: 0;
+  gap: 0;
+}
+.ig-ex-demo.compact .ig-ex-demo-frame {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--surface-2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.ig-ex-demo.compact .ig-ex-demo-gif {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.ig-ex-demo.compact.empty .ig-ex-demo-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ig-ex-demo-compact-ph {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+.ig-wo-guide-thumb {
+  flex-shrink: 0;
 }
 .ig-wo-guide-body {
   flex: 1;

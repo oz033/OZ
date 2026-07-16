@@ -1014,7 +1014,16 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
             <header className="ig-wo-guide-head">
               <div className="ig-wo-guide-titles">
                 <span className="ig-wo-guide-kicker">Geräte-Anleitung</span>
-                <h2 className="ig-wo-guide-title">{exercise}</h2>
+                <div className="ig-wo-guide-title-row">
+                  <h2 className="ig-wo-guide-title">{exercise}</h2>
+                  <ExerciseDemo
+                    compact
+                    exerciseName={exercise}
+                    gif={meta?.gif}
+                    image={meta?.image}
+                    className="ig-wo-guide-thumb"
+                  />
+                </div>
                 {meta?.nr != null && (
                   <span className="ig-badge">Gerät {meta.nr}</span>
                 )}
