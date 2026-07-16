@@ -14,6 +14,7 @@ import {
   Moon,
 } from "lucide-react";
 import { OzGymMark, SplashScreen } from "./components/brand.jsx";
+import { Analytics } from "@vercel/analytics/react";
 
 import { STORAGE_KEY, STORAGE_KEY_LEGACY, blankPlan } from "./lib/constants.js";
 import {
@@ -309,7 +310,9 @@ export default function App() {
   };
 
   return (
-    <div className="ig-app" {...themeAttrs} style={accentStyle}>
+    <>
+      <Analytics />
+      <div className="ig-app" {...themeAttrs} style={accentStyle}>
       <div className="ig-phone">
         <header className="ig-header">
           <div className="ig-brand">
@@ -469,5 +472,6 @@ export default function App() {
         )}
       </div>
     </div>
+    </>
   );
 }
