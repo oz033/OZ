@@ -434,6 +434,54 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
   const step = (setter, current, delta, min) =>
     setter(round1(Math.max(min, (Number(current) || 0) + delta)));
 
+  // Hold +/- : first step immediately, then accelerate while pressed
+  const holdTimer = useRef(null);
+  const stopHold = useCallback(() => {
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+  }, []);
+  useEffect(() => () => stopHold(), [stopHold]);
+
+  const startHold = useCallback(
+    (applyOnce) => {
+      stopHold();
+      applyOnce();
+      let delay = 380;
+      const loop = () => {
+        applyOnce();
+        delay = Math.max(45, delay * 0.82);
+        holdTimer.current = setTimeout(loop, delay);
+      };
+      holdTimer.current = setTimeout(loop, delay);
+    },
+    [stopHold],
+  );
+
+  const bumpWeight = useCallback((delta) => {
+    setWeight((w) => round1(Math.max(0, (Number(w) || 0) + delta)));
+  }, []);
+  const bumpReps = useCallback((delta) => {
+    setReps((r) => Math.max(1, Math.round((Number(r) || 0) + delta)));
+  }, []);
+
+  const parseWeightInput = (raw) => {
+    const v = String(raw).replace(",", ".").replace(/[^\d.]/g, "");
+    // allow intermediate "12." while typing
+    if (v === "" || v === ".") return v;
+    if ((v.match(/\./g) || []).length > 1) return weight;
+    return v;
+  };
+  const commitWeight = () => {
+    const n = Number(String(weight).replace(",", "."));
+    setWeight(round1(Math.max(0, Number.isFinite(n) ? n : 0)));
+  };
+  const commitReps = () => {
+    const n = parseInt(String(reps), 10);
+    setReps(Math.max(1, Number.isFinite(n) ? n : 1));
+  };
+
   const advance = useCallback(() => {
     const currentDone = item ? itemDone(item) : true;
     if (!currentDone) {
@@ -1224,16 +1272,44 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
               <button
                 type="button"
                 className="ig-step-mini"
-                onClick={() => step(setWeight, weight, -2.5, 0)}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  startHold(() => bumpWeight(-2.5));
+                }}
+                onPointerUp={stopHold}
+                onPointerLeave={stopHold}
+                onPointerCancel={stopHold}
                 aria-label="Gewicht verringern"
               >
                 <Minus size={22} strokeWidth={2.25} />
               </button>
-              <span className="ig-step-val mono">{weight}</span>
+              <input
+                className="ig-step-val mono ig-step-input"
+                type="text"
+                inputMode="decimal"
+                enterKeyHint="done"
+                value={weight}
+                onChange={(e) => setWeight(parseWeightInput(e.target.value))}
+                onBlur={commitWeight}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitWeight();
+                    e.currentTarget.blur();
+                  }
+                }}
+                aria-label="Gewicht eingeben"
+              />
               <button
                 type="button"
                 className="ig-step-mini"
-                onClick={() => step(setWeight, weight, 2.5, 0)}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  startHold(() => bumpWeight(2.5));
+                }}
+                onPointerUp={stopHold}
+                onPointerLeave={stopHold}
+                onPointerCancel={stopHold}
                 aria-label="Gewicht erhöhen"
               >
                 <Plus size={22} strokeWidth={2.25} />
@@ -1246,16 +1322,48 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
               <button
                 type="button"
                 className="ig-step-mini"
-                onClick={() => step(setReps, reps, -1, 1)}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  startHold(() => bumpReps(-1));
+                }}
+                onPointerUp={stopHold}
+                onPointerLeave={stopHold}
+                onPointerCancel={stopHold}
                 aria-label="Wiederholungen verringern"
               >
                 <Minus size={22} strokeWidth={2.25} />
               </button>
-              <span className="ig-step-val mono">{reps}</span>
+              <input
+                className="ig-step-val mono ig-step-input"
+                type="text"
+                inputMode="numeric"
+                enterKeyHint="done"
+                pattern="[0-9]*"
+                value={reps}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "");
+                  setReps(v === "" ? "" : v);
+                }}
+                onBlur={commitReps}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitReps();
+                    e.currentTarget.blur();
+                  }
+                }}
+                aria-label="Wiederholungen eingeben"
+              />
               <button
                 type="button"
                 className="ig-step-mini"
-                onClick={() => step(setReps, reps, 1, 1)}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  startHold(() => bumpReps(1));
+                }}
+                onPointerUp={stopHold}
+                onPointerLeave={stopHold}
+                onPointerCancel={stopHold}
                 aria-label="Wiederholungen erhöhen"
               >
                 <Plus size={22} strokeWidth={2.25} />

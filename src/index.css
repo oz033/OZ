@@ -1781,8 +1781,43 @@ button.ig-overview-col { cursor: pointer; }
   min-width: 56px;
   font-weight: 700;
 }
+/* Tappable number field — type weight/reps directly */
+.ig-step-input {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: center;
+  min-width: 56px;
+  max-width: 72px;
+  width: 4.5ch;
+  padding: 6px 2px;
+  margin: 0;
+  border-radius: 8px;
+  line-height: 1.1;
+}
+.ig-step-input:focus {
+  outline: none;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.ig-wo-onehand .ig-step-lg .ig-step-input {
+  font-size: 22px;
+  min-width: 58px;
+  max-width: 80px;
+}
 .ig-wo-steppers {
   gap: 10px;
+}
+/* Prevent iOS callout / selection delay on hold buttons */
+.ig-step-mini {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
 }
 
 .ig-wo-rest { position: absolute; inset: 0; z-index: 110; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; animation: ig-fade-up 0.25s var(--ease-out); }
