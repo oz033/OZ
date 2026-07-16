@@ -1495,34 +1495,56 @@ button.ig-wo-seg:active {
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   color: var(--accent);
 }
-/* Workout bottom chrome — one-hand / thumb zone (no keyboard transform — Safari owns that) */
+/* Workout bottom chrome — compact thumb zone (more room for GIF above) */
 .ig-wo-bottom {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-3) calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--space-3));
+  gap: 6px;
+  padding: 8px 12px calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 8px);
   background: var(--surface, #161822);
   color: var(--text, #f2f3f7);
   border-top: 1px solid var(--border, #2a2d3a);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  box-shadow: 0 -8px 28px rgba(0,0,0,0.16);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: 0 -6px 20px rgba(0,0,0,0.14);
 }
 .ig-wo-bottom.note-focus {
   /* Compact while typing: slightly stronger edge, no vertical jump */
   box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.22);
 }
-/* Compact upper track so controls sit in thumb reach */
+/* Upper track takes more space for the exercise GIF/image */
 .ig-wo.ig-wo .ig-wo-track-wrap {
-  min-height: 140px;
-  flex: 1 1 36%;
+  min-height: 200px;
+  flex: 1 1 52%;
+}
+.ig-wo .ig-ex-demo {
+  max-width: 280px;
 }
 .ig-wo .ig-ex-demo-frame {
-  width: 132px;
-  height: 132px;
+  width: 196px;
+  height: 196px;
+  border-radius: 18px;
+}
+.ig-wo .ig-ex-demo.empty .ig-ex-demo-fallback {
+  width: 196px;
+  min-height: 160px;
 }
 .ig-wo .ig-wo-ex-name {
-  font-size: 20px;
+  font-size: 18px;
+}
+.ig-wo .ig-wo-card {
+  gap: 8px;
+  padding: 6px 16px 4px;
+}
+.ig-wo .ig-wo-card-top {
+  gap: 4px;
+}
+.ig-wo .ig-wo-mini-stats {
+  font-size: 10.5px;
+}
+.ig-wo .ig-wo-hint {
+  font-size: 11px;
+  padding: 5px 10px;
 }
 .ig-wo-ex-title-row {
   display: flex;
@@ -1537,10 +1559,10 @@ button.ig-wo-seg:active {
 /* Info opposite X in bottom bar (right) */
 .ig-wo-info-btn {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1849,23 +1871,23 @@ button.ig-wo-seg:active {
   opacity: 0.5;
 }
 .ig-wo-onehand {
-  gap: 10px;
-  padding-top: 10px;
+  gap: 6px;
+  padding-top: 6px;
 }
 /* Top of bottom sheet: X exit · set dots · spacer (aligned to bar width) */
 .ig-wo-bottom-top {
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
+  grid-template-columns: 40px 1fr 40px;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
+  gap: 6px;
+  min-height: 40px;
   width: 100%;
 }
 .ig-wo-exit {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1886,8 +1908,8 @@ button.ig-wo-seg:active {
   background: color-mix(in srgb, var(--danger, #e6543f) 12%, var(--surface-2));
 }
 .ig-wo-exit-spacer {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
 }
 .ig-wo-bottom-top .ig-wo-sets {
   justify-content: center;
@@ -1904,16 +1926,16 @@ button.ig-wo-seg:active {
   color: var(--text, #f2f3f7);
   text-align: center;
 }
-.ig-wo-sets { display: flex; gap: 8px; justify-content: center; padding-top: 0; }
+.ig-wo-sets { display: flex; gap: 6px; justify-content: center; padding-top: 0; }
 .ig-wo-cta {
   background: var(--accent) !important;
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--accent) 30%, transparent);
   letter-spacing: 0.01em;
-  min-height: 56px !important;
-  height: 56px !important;
-  font-size: 16px !important;
+  min-height: 48px !important;
+  height: 48px !important;
+  font-size: 15px !important;
   font-weight: 700 !important;
-  border-radius: 16px !important;
+  border-radius: 14px !important;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
@@ -1924,11 +1946,11 @@ button.ig-wo-seg:active {
 .ig-wo-last-load {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  min-height: 48px;
-  padding: 10px 14px;
-  border-radius: 14px;
+  min-height: 40px;
+  padding: 7px 12px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
@@ -1978,20 +2000,20 @@ button.ig-wo-seg:active {
 .ig-step-mini { background: none; border: none; color: var(--text-dim); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: var(--radius-sm); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .ig-step-mini:active { background: var(--border); }
 .ig-step-val { font-size: 18px; font-weight: 700; min-width: 42px; text-align: center; }
-/* Large steppers for one-hand gym use */
+/* Steppers — compact but still thumb-friendly */
 .ig-wo-onehand .ig-step-lg {
-  gap: 4px;
-  padding: 4px;
-  border-radius: 14px;
-  min-height: 52px;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 12px;
+  min-height: 42px;
 }
 .ig-wo-onehand .ig-step-lg .ig-step-mini {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  min-height: 48px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   color: var(--text);
-  border-radius: 12px;
+  border-radius: 10px;
   background: color-mix(in srgb, var(--bg) 35%, transparent);
 }
 .ig-wo-onehand .ig-step-lg .ig-step-mini:active {
@@ -1999,8 +2021,8 @@ button.ig-wo-seg:active {
   color: var(--accent);
 }
 .ig-wo-onehand .ig-step-lg .ig-step-val {
-  font-size: 22px;
-  min-width: 56px;
+  font-size: 18px;
+  min-width: 48px;
   font-weight: 700;
 }
 /* Tappable number field — type weight/reps directly */
@@ -2028,12 +2050,29 @@ button.ig-wo-seg:active {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 .ig-wo-onehand .ig-step-lg .ig-step-input {
-  font-size: 22px;
-  min-width: 58px;
-  max-width: 80px;
+  font-size: 18px;
+  min-width: 48px;
+  max-width: 68px;
 }
 .ig-wo-steppers {
-  gap: 10px;
+  gap: 8px;
+}
+.ig-wo-onehand .ig-steplabel {
+  font-size: 9px;
+  margin-bottom: 2px;
+}
+.ig-wo-onehand .ig-wo-note-label {
+  font-size: 9px;
+}
+.ig-wo-onehand .ig-wo-note-input {
+  min-height: 38px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 12px;
+}
+.ig-wo-onehand .ig-wo-milestone {
+  font-size: 11px;
+  padding: 4px 10px;
 }
 /* Prevent iOS callout / selection delay on hold buttons */
 .ig-step-mini {
