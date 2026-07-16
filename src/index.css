@@ -1530,88 +1530,32 @@ button.ig-wo-seg:active {
   height: 4px;
   border-radius: 99px;
   background: color-mix(in srgb, var(--text-dim) 55%, transparent);
+  transition: background 0.15s ease, transform 0.15s ease;
 }
-.ig-wo-bottom-body {
+.ig-wo-bottom.is-dragging-sheet .ig-wo-bottom-handle-bar {
+  background: var(--text-dim);
+  transform: scaleX(1.15);
+}
+/* Only milestone / last-load / note collapse — steppers + CTA stay */
+.ig-wo-bottom-extras {
   display: flex;
   flex-direction: column;
   gap: 6px;
   overflow: hidden;
-  max-height: 420px;
+  will-change: height, opacity;
+  /* height set live via JS for fluid drag */
+  height: auto;
   opacity: 1;
-  transition:
-    max-height 0.28s var(--ease-out, ease),
-    opacity 0.2s ease,
-    margin 0.2s ease;
 }
 .ig-wo-bottom.is-collapsed {
   gap: 4px;
   padding-bottom: calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 6px);
 }
-.ig-wo-bottom.is-collapsed .ig-wo-bottom-body {
-  max-height: 0;
-  opacity: 0;
-  margin: 0;
-  pointer-events: none;
-}
-.ig-wo-bottom-peek {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 44px;
-}
-.ig-wo-bottom-peek-expand {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ig-wo-bottom.is-collapsed .ig-wo-steppers {
   gap: 6px;
-  min-height: 40px;
-  padding: 0 10px;
-  border: 1px dashed var(--border);
-  border-radius: 12px;
-  background: var(--surface-2);
-  color: var(--text-dim);
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: none;
 }
-.ig-wo-bottom-peek-expand:active {
-  transform: scale(0.98);
-  color: var(--text);
-}
-.ig-wo-bottom-peek-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.ig-wo-bottom-peek-cta {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 40px;
-  padding: 0 14px;
-  border: none;
-  border-radius: 12px;
-  background: var(--accent);
-  color: var(--on-accent);
-  font-size: 13px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-.ig-wo-bottom-peek-cta:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.ig-wo-bottom-peek-cta:active:not(:disabled) {
-  transform: scale(0.97);
+.ig-wo-bottom.is-dragging-sheet .ig-wo-bottom-extras {
+  transition: none !important;
 }
 .ig-wo-bottom.note-focus {
   /* Compact while typing: slightly stronger edge, no vertical jump */

@@ -21,7 +21,6 @@ import {
   Trophy,
   TrendingUp,
   Info,
-  ChevronUp,
 } from "lucide-react";
 import { CountUp, RestRing, Confetti } from "../components/ui.jsx";
 import { EclipseMark } from "../components/brand.jsx";
@@ -99,14 +98,20 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
   const noteSaveTimer = useRef(null);
   const noteInputRef = useRef(null);
   const bottomSheetRef = useRef(null);
+  const bottomExtrasRef = useRef(null);
+  /** 1 = fully expanded extras, 0 = collapsed (steppers+CTA always stay) */
+  const sheetRatioRef = useRef(1);
   const sheetDragRef = useRef({
     active: false,
+    locked: false,
     y0: 0,
     dy: 0,
     lastY: 0,
     lastT: 0,
     vy: 0,
+    startRatio: 1,
   });
+  const sheetRafRef = useRef(0);
 
   // Live refs for swipe handlers (avoid stale closures / React re-renders mid-drag)
   const idxRef = useRef(firstOpen === -1 ? 0 : firstOpen);
@@ -781,12 +786,86 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
     };
   }, [phase, applyTrackX, settleTrack, soundOn, hapticsOn]);
 
+  // Measure extras height when content changes
+  const measureSheetExtras = useCallback(() => {
+    const extras = bottomExtrasRef.current;
+    if (!extras) return 1;
+    // Temporarily expand to measure natural height
+    const prevH = extras.style.height;
+    const prevO = extras.style.opacity;
+    const prevT = extras.style.transition;
+    extras.style.transition = "none";
+    extras.style.height = "auto";
+    extras.style.opacity = "1";
+    const h = Math.max(1, extras.scrollHeight);
+    extras.dataset.fullH = String(h);
+    extras.style.height = prevH;
+    extras.style.opacity = prevO;
+    extras.style.transition = prevT;
+    return h;
+  }, []);
+
+  /** Apply collapse ratio 0..1 live (no React re-render mid-drag) */
+  const applySheetRatio = useCallback((ratio, { animate = false } = {}) => {
+    const extras = bottomExtrasRef.current;
+    const sheet = bottomSheetRef.current;
+    if (!extras || !sheet) return;
+    const r = Math.max(0, Math.min(1, ratio));
+    sheetRatioRef.current = r;
+    let h = Number(extras.dataset.fullH) || 0;
+    if (!h || h < 8) {
+      extras.style.transition = "none";
+      extras.style.height = "auto";
+      h = Math.max(1, extras.scrollHeight);
+      extras.dataset.fullH = String(h);
+    }
+    extras.style.transition = animate
+      ? "height 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease"
+      : "none";
+    extras.style.height = `${Math.round(h * r)}px`;
+    extras.style.opacity = String(0.15 + r * 0.85);
+    extras.style.pointerEvents = r < 0.2 ? "none" : "auto";
+    sheet.classList.toggle("is-collapsed", r < 0.45);
+    sheet.classList.toggle("is-dragging-sheet", !animate && sheetDragRef.current.active);
+  }, []);
+
+  const springSheetTo = useCallback(
+    (target) => {
+      cancelAnimationFrame(sheetRafRef.current);
+      const goal = target <= 0 ? 0 : target >= 1 ? 1 : target;
+      const tick = () => {
+        const cur = sheetRatioRef.current;
+        const next = cur + (goal - cur) * 0.28;
+        if (Math.abs(goal - next) < 0.012) {
+          applySheetRatio(goal, { animate: false });
+          setBottomCollapsed(goal < 0.5);
+          return;
+        }
+        applySheetRatio(next, { animate: false });
+        sheetRafRef.current = requestAnimationFrame(tick);
+      };
+      sheetRafRef.current = requestAnimationFrame(tick);
+    },
+    [applySheetRatio],
+  );
+
   // Note focus always expands the bottom sheet
   useEffect(() => {
-    if (noteFocused) setBottomCollapsed(false);
-  }, [noteFocused]);
+    if (noteFocused) {
+      setBottomCollapsed(false);
+      measureSheetExtras();
+      springSheetTo(1);
+    }
+  }, [noteFocused, measureSheetExtras, springSheetTo]);
 
-  // Vertical swipe on bottom sheet handle / chrome: down = collapse, up = expand
+  // Keep extras measured after paint
+  useLayoutEffect(() => {
+    if (phase !== "lift") return;
+    measureSheetExtras();
+    applySheetRatio(bottomCollapsed ? 0 : 1, { animate: false });
+  }, [phase, milestone, lastLoad, noteFocused, measureSheetExtras, applySheetRatio, bottomCollapsed]);
+
+  // Vertical drag — same feel as horizontal exercise swipe (live + spring)
   useEffect(() => {
     if (phase !== "lift") return;
     const el = bottomSheetRef.current;
@@ -796,24 +875,44 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
 
     const onStart = (e) => {
       if (noteFocused) return;
-      // Only drag from handle or top chrome (not steppers / inputs)
       const t = e.target;
       if (!(t instanceof Element)) return;
+      // Drag from handle / top bar / empty sheet chrome — not from inputs/steppers
+      if (t.closest("input, textarea, [data-no-sheet-drag]")) return;
       if (
-        !t.closest(".ig-wo-bottom-handle") &&
-        !t.closest(".ig-wo-bottom-top") &&
-        !t.closest(".ig-wo-bottom-peek")
+        t.closest(".ig-step-mini") ||
+        t.closest(".ig-step-input") ||
+        t.closest(".ig-wo-cta") ||
+        t.closest(".ig-wo-last-load") ||
+        t.closest(".ig-wo-note-edit")
       ) {
-        return;
+        // Still allow starting on handle area only
+        if (!t.closest(".ig-wo-bottom-handle") && !t.closest(".ig-wo-bottom-top")) {
+          return;
+        }
+        if (t.closest("button.ig-wo-exit, button.ig-wo-info-btn")) return;
       }
-      if (t.closest("button, input, a, [data-no-sheet-drag]")) return;
+      // Prefer handle + top strip; also allow drag on sheet padding edge
+      const okZone =
+        t.closest(".ig-wo-bottom-handle") ||
+        t.closest(".ig-wo-bottom-top") ||
+        t.classList?.contains?.("ig-wo-bottom") ||
+        t.closest(".ig-wo-bottom-extras");
+      if (!okZone) return;
+      if (t.closest("button.ig-wo-exit, button.ig-wo-info-btn")) return;
+
+      cancelAnimationFrame(sheetRafRef.current);
+      measureSheetExtras();
       d.active = true;
+      d.locked = false;
       d.y0 = e.clientY;
       d.dy = 0;
       d.lastY = e.clientY;
       d.lastT = performance.now();
       d.vy = 0;
+      d.startRatio = sheetRatioRef.current;
       pid = e.pointerId;
+      el.classList.add("is-dragging-sheet");
       try {
         el.setPointerCapture(e.pointerId);
       } catch {
@@ -827,37 +926,67 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
       const y = e.clientY;
       const now = performance.now();
       const dt = Math.max(1, now - d.lastT);
-      d.vy = (y - d.lastY) / dt;
+      d.vy = (y - d.lastY) / dt; // px/ms
       d.lastY = y;
       d.lastT = now;
       d.dy = y - d.y0;
-      // Prevent page bounce while dragging sheet
-      if (Math.abs(d.dy) > 6) e.preventDefault();
+
+      // Axis lock after small move (same idea as L/R exercise swipe)
+      if (!d.locked) {
+        if (Math.abs(d.dy) < 8) return;
+        d.locked = true;
+      }
+      e.preventDefault();
+
+      const extras = bottomExtrasRef.current;
+      const h = Number(extras?.dataset?.fullH) || 120;
+      // Finger down → collapse (ratio down); finger up → expand
+      const next = d.startRatio - d.dy / h;
+      applySheetRatio(next, { animate: false });
     };
 
     const onEnd = (e) => {
       if (!d.active) return;
       if (pid != null && e.pointerId != null && e.pointerId !== pid) return;
+      const wasLocked = d.locked;
       d.active = false;
+      d.locked = false;
       pid = null;
+      el.classList.remove("is-dragging-sheet");
       try {
         if (e.pointerId != null) el.releasePointerCapture(e.pointerId);
       } catch {
         /* ignore */
       }
-      const dy = d.dy;
-      const vy = d.vy;
-      const fling = Math.abs(vy) > 0.35;
-      const dist = Math.abs(dy) > 36;
-      if ((dy > 28 && dist) || (vy > 0.35 && fling && dy > 8)) {
-        setBottomCollapsed(true);
-        if (hapticsOn) buzz(8, true);
-        playSound("tap", soundOn);
-      } else if ((dy < -28 && dist) || (vy < -0.35 && fling && dy < -8)) {
-        setBottomCollapsed(false);
-        if (hapticsOn) buzz(8, true);
-        playSound("tap", soundOn);
+
+      if (!wasLocked) {
+        // Tap handle → toggle
+        const t = e.target;
+        if (t instanceof Element && t.closest(".ig-wo-bottom-handle")) {
+          const to = sheetRatioRef.current > 0.5 ? 0 : 1;
+          springSheetTo(to);
+          if (hapticsOn) buzz(8, true);
+          playSound("tap", soundOn);
+        } else {
+          springSheetTo(sheetRatioRef.current > 0.5 ? 1 : 0);
+        }
+        d.dy = 0;
+        d.vy = 0;
+        return;
       }
+
+      const r = sheetRatioRef.current;
+      const vy = d.vy; // + down
+      let goal = r >= 0.5 ? 1 : 0;
+      // Fling wins over midpoint
+      if (vy > 0.45) goal = 0;
+      else if (vy < -0.45) goal = 1;
+      else if (r > 0.55) goal = 1;
+      else if (r < 0.45) goal = 0;
+
+      springSheetTo(goal);
+      if (hapticsOn) buzz(8, true);
+      playSound("tap", soundOn);
       d.dy = 0;
       d.vy = 0;
     };
@@ -868,13 +997,22 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
     el.addEventListener("pointercancel", onEnd);
     el.addEventListener("lostpointercapture", onEnd);
     return () => {
+      cancelAnimationFrame(sheetRafRef.current);
       el.removeEventListener("pointerdown", onStart);
       el.removeEventListener("pointermove", onMove);
       el.removeEventListener("pointerup", onEnd);
       el.removeEventListener("pointercancel", onEnd);
       el.removeEventListener("lostpointercapture", onEnd);
     };
-  }, [phase, noteFocused, soundOn, hapticsOn]);
+  }, [
+    phase,
+    noteFocused,
+    soundOn,
+    hapticsOn,
+    measureSheetExtras,
+    applySheetRatio,
+    springSheetTo,
+  ]);
 
   // Nächste offene Übung (für Coach-Karte in der Pause)
   const nextUp = useMemo(() => {
@@ -1238,24 +1376,27 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
           (bottomCollapsed ? " is-collapsed" : "")
         }
       >
-        <button
-          type="button"
+        <div
           className="ig-wo-bottom-handle"
+          role="button"
+          tabIndex={0}
           aria-label={
             bottomCollapsed
-              ? "Steuerung einblenden"
-              : "Steuerung verkleinern, nach unten wischen"
+              ? "Hoch wischen: mehr Optionen"
+              : "Runter wischen: verkleinern"
           }
           aria-expanded={!bottomCollapsed}
-          onClick={() => {
-            setBottomCollapsed((c) => !c);
-            playSound("tap", soundOn);
-            if (hapticsOn) buzz(8, true);
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              springSheetTo(sheetRatioRef.current > 0.5 ? 0 : 1);
+              playSound("tap", soundOn);
+            }
           }}
         >
           <span className="ig-wo-bottom-handle-bar" aria-hidden="true" />
-        </button>
-        {/* Leiste: X (beenden) · Satz-Dots · Info — always visible */}
+        </div>
+        {/* Always visible: X · dots · Info */}
         <div className="ig-wo-bottom-top">
           <button
             type="button"
@@ -1302,129 +1443,105 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
           </button>
         </div>
 
-        {bottomCollapsed && (
-          <div className="ig-wo-bottom-peek" role="group" aria-label="Kompakte Steuerung">
+        {/* Collapsible extras only (note / last load / milestone) */}
+        <div
+          ref={bottomExtrasRef}
+          className="ig-wo-bottom-extras"
+          aria-hidden={bottomCollapsed}
+        >
+          {milestone && !noteFocused && (
+            <span
+              className={"ig-wo-milestone" + (milestone.smart ? " smart" : "")}
+              key={milestone.label}
+            >
+              {milestone.smart && <TrendingUp size={13} aria-hidden="true" />}
+              {milestone.label}
+            </span>
+          )}
+          {lastLoad && !noteFocused && (
             <button
               type="button"
-              className="ig-wo-bottom-peek-expand"
-              onClick={() => {
-                setBottomCollapsed(false);
-                playSound("tap", soundOn);
-              }}
-              aria-label="Steuerung wieder einblenden"
+              className={
+                "ig-wo-last-load" + (lastMatchesInput ? " active" : "")
+              }
+              onClick={applyLastLoad}
+              aria-label={`Zuletzt ${lastLoad.weight} Kilo mal ${lastLoad.reps} übernehmen`}
             >
-              <ChevronUp size={16} strokeWidth={2.5} aria-hidden="true" />
-              <span className="ig-wo-bottom-peek-text">
-                {weight !== "" && reps !== ""
-                  ? `${weight} kg × ${reps} · wischen ↑`
-                  : "Steuerung · wischen ↑"}
+              <span className="ig-wo-last-load-kicker">Zuletzt</span>
+              <span className="ig-wo-last-load-val mono">
+                {lastLoad.weight} kg × {lastLoad.reps}
+              </span>
+              <span className="ig-wo-last-load-cta">
+                {lastMatchesInput ? "Aktiv" : "Übernehmen"}
               </span>
             </button>
-            <button
-              type="button"
-              className="ig-wo-bottom-peek-cta"
-              data-no-sheet-drag
-              disabled={doneCount >= targetSets}
-              onClick={() => completeSet()}
-            >
-              <Check size={16} strokeWidth={2.5} />
-              Satz
-            </button>
-          </div>
-        )}
-
-        <div className="ig-wo-bottom-body" aria-hidden={bottomCollapsed}>
-        {milestone && !noteFocused && (
-          <span
-            className={"ig-wo-milestone" + (milestone.smart ? " smart" : "")}
-            key={milestone.label}
-          >
-            {milestone.smart && <TrendingUp size={13} aria-hidden="true" />}
-            {milestone.label}
-          </span>
-        )}
-        {lastLoad && !noteFocused && (
-          <button
-            type="button"
+          )}
+          <div
             className={
-              "ig-wo-last-load" + (lastMatchesInput ? " active" : "")
+              "ig-wo-note-edit" + (noteFocused ? " is-dock" : "")
             }
-            onClick={applyLastLoad}
-            aria-label={`Zuletzt ${lastLoad.weight} Kilo mal ${lastLoad.reps} übernehmen`}
+            data-no-swipe
+            data-no-sheet-drag
+            style={
+              noteFocused
+                ? { bottom: kbBottom > 0 ? kbBottom : 0 }
+                : undefined
+            }
           >
-            <span className="ig-wo-last-load-kicker">Zuletzt</span>
-            <span className="ig-wo-last-load-val mono">
-              {lastLoad.weight} kg × {lastLoad.reps}
-            </span>
-            <span className="ig-wo-last-load-cta">
-              {lastMatchesInput ? "Aktiv" : "Übernehmen"}
-            </span>
-          </button>
-        )}
-        <div
-          className={
-            "ig-wo-note-edit" + (noteFocused ? " is-dock" : "")
-          }
-          data-no-swipe
-          data-no-sheet-drag
-          style={
-            noteFocused
-              ? { bottom: kbBottom > 0 ? kbBottom : 0 }
-              : undefined
-          }
-        >
-          <div className="ig-wo-note-head">
-            <label className="ig-wo-note-label" htmlFor="ig-wo-note">
-              {noteFocused ? `Notiz · ${exercise || "Übung"}` : "Notiz"}
-            </label>
-            {noteFocused && (
-              <button
-                type="button"
-                className="ig-wo-note-done"
-                // preventDefault so input doesn't blur before we handle done
-                onMouseDown={(e) => e.preventDefault()}
-                onTouchStart={(e) => e.preventDefault()}
-                onClick={finishNote}
-              >
-                Fertig
-              </button>
-            )}
+            <div className="ig-wo-note-head">
+              <label className="ig-wo-note-label" htmlFor="ig-wo-note">
+                {noteFocused ? `Notiz · ${exercise || "Übung"}` : "Notiz"}
+              </label>
+              {noteFocused && (
+                <button
+                  type="button"
+                  className="ig-wo-note-done"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onTouchStart={(e) => e.preventDefault()}
+                  onClick={finishNote}
+                >
+                  Fertig
+                </button>
+              )}
+            </div>
+            <input
+              ref={noteInputRef}
+              id="ig-wo-note"
+              type="text"
+              className="ig-wo-note-input"
+              inputMode="text"
+              enterKeyHint="done"
+              autoComplete="off"
+              autoCorrect="on"
+              value={noteDraft}
+              onChange={(ev) => onNoteChange(ev.target.value)}
+              onFocus={onNoteFocus}
+              onBlur={(e) => {
+                const next = e.relatedTarget;
+                if (next?.classList?.contains?.("ig-wo-note-done")) return;
+                onNoteBlur();
+              }}
+              onKeyDown={(ev) => {
+                if (ev.key === "Enter") {
+                  ev.preventDefault();
+                  finishNote(ev);
+                }
+              }}
+              placeholder="Sitz · Pin · Griff…"
+              maxLength={120}
+            />
           </div>
-          <input
-            ref={noteInputRef}
-            id="ig-wo-note"
-            type="text"
-            className="ig-wo-note-input"
-            inputMode="text"
-            enterKeyHint="done"
-            autoComplete="off"
-            autoCorrect="on"
-            value={noteDraft}
-            onChange={(ev) => onNoteChange(ev.target.value)}
-            onFocus={onNoteFocus}
-            onBlur={(e) => {
-              // Ignore blur when tapping Fertig (handled there)
-              const next = e.relatedTarget;
-              if (next?.classList?.contains?.("ig-wo-note-done")) return;
-              onNoteBlur();
-            }}
-            onKeyDown={(ev) => {
-              if (ev.key === "Enter") {
-                ev.preventDefault();
-                finishNote(ev);
-              }
-            }}
-            placeholder="Sitz · Pin · Griff…"
-            maxLength={120}
-          />
         </div>
-        <div className="ig-set-inputs two ig-wo-steppers">
+
+        {/* Always visible: weight · reps · complete set */}
+        <div className="ig-set-inputs two ig-wo-steppers" data-no-sheet-drag>
           <div className="ig-num-field">
             <span className="ig-steplabel">Gewicht (kg)</span>
             <div className="ig-steplabel-controls ig-step-lg">
               <button
                 type="button"
                 className="ig-step-mini"
+                data-no-sheet-drag
                 onPointerDown={(e) => {
                   e.preventDefault();
                   startHold(() => bumpWeight(-2.5));
@@ -1456,6 +1573,7 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
               <button
                 type="button"
                 className="ig-step-mini"
+                data-no-sheet-drag
                 onPointerDown={(e) => {
                   e.preventDefault();
                   startHold(() => bumpWeight(2.5));
@@ -1475,6 +1593,7 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
               <button
                 type="button"
                 className="ig-step-mini"
+                data-no-sheet-drag
                 onPointerDown={(e) => {
                   e.preventDefault();
                   startHold(() => bumpReps(-1));
@@ -1510,6 +1629,7 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
               <button
                 type="button"
                 className="ig-step-mini"
+                data-no-sheet-drag
                 onPointerDown={(e) => {
                   e.preventDefault();
                   startHold(() => bumpReps(1));
@@ -1534,7 +1654,6 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
           <Check size={22} strokeWidth={2.5} />
           {doneCount >= targetSets ? "Übung fertig" : "Satz abschließen"}
         </button>
-        </div>
       </div>
 
       {(phase === "rest" || phase === "go") && (
