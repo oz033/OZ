@@ -5,7 +5,6 @@
 import React, { useMemo, useState } from "react";
 import {
   Play,
-  Plus,
   Flame,
   Trophy,
   Target,
@@ -124,18 +123,10 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
         <p className="ig-home-sub">{sub}</p>
       </div>
 
-      {/* 2 · One primary CTA */}
+      {/* 2 · Primary CTA only when a session can still start */}
       {!restDay && !trainedToday && plan && (
         <button className="ig-btn-primary wide xl ig-home-cta" onClick={() => onStart()}>
           <Play size={20} /> Workout starten
-        </button>
-      )}
-      {trainedToday && (
-        <button
-          className="ig-btn-primary wide ghosted ig-home-cta"
-          onClick={() => goTo("workout")}
-        >
-          <Plus size={16} /> Weiteren Satz loggen
         </button>
       )}
       {restDay && plan && !trainedToday && (
