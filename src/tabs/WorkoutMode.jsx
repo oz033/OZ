@@ -32,7 +32,7 @@ import {
   buzz,
   round1,
 } from "../lib/utils.js";
-import { setWorkoutWakeLock, isWakeLockSupported } from "../lib/wakeLock.js";
+import { setWorkoutWakeLock } from "../lib/wakeLock.js";
 import { ZONE_LABEL, MOTIVATION_POOL } from "../lib/constants.js";
 import { smartSuggest } from "../lib/planGenerator.js";
 
@@ -54,30 +54,12 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
   /** Live-Pause-Overrides (exerciseId → sec), bis Plan-Update durchkommt */
   const restOverrideRef = useRef({});
   const [restSavedHint, setRestSavedHint] = useState(null);
-  const [wakeHint, setWakeHint] = useState(false);
 
-  // Screen Wake Lock: Display bleibt an während des Workouts (PWA)
+  // Screen Wake Lock während des Workouts (ohne Banner)
   useEffect(() => {
     setWorkoutWakeLock(true);
-    let show = false;
-    try {
-      show =
-        isWakeLockSupported() && !localStorage.getItem("ozgym:wakehint");
-    } catch {
-      show = isWakeLockSupported();
-    }
-    if (show) setWakeHint(true);
     return () => setWorkoutWakeLock(false);
   }, []);
-
-  const dismissWakeHint = () => {
-    setWakeHint(false);
-    try {
-      localStorage.setItem("ozgym:wakehint", "1");
-    } catch {
-      /* ignore */
-    }
-  };
 
   const itemDone = useCallback(
     (it) =>
@@ -927,14 +909,6 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
   /* ---- Aktiver Modus ---- */
   return (
     <div className="ig-wo">
-      {wakeHint && (
-        <div className="ig-wake-banner" role="status">
-          <span>Display bleibt an während des Trainings — Timer läuft zuverlässiger.</span>
-          <button type="button" className="ig-wake-banner-x" onClick={dismissWakeHint}>
-            OK
-          </button>
-        </div>
-      )}
       <header className="ig-wo-head">
         <div className="ig-wo-head-mid">
           <span className="ig-wo-head-title">
