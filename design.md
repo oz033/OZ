@@ -23,12 +23,13 @@ App is a **phone shell** (single viewport, bottom tabs) — not a marketing site
 | Verlauf | Spec sheet denser | Charts optional · records · weight |
 | Profil | Identity + utility | Glass logo · mode · body · sound · backup |
 
-## Brand (locked — do not redesign)
+## Brand (locked — do not redesign without ask)
 
 - **Wordmark:** OZGYM (Space Grotesk, letter-spacing ~0.14–0.18em, weight 700)
-- **Mark:** Glass squircle · white O-ring · classic blue Z on top  
-  Path: `M24 24 H40 L24 40 H40` · square caps · Z after O  
-  File: `src/components/brand.jsx` + `public/favicon.svg`
+- **Mark:** Gothic blackletter **OZ** monogram · cream on forest green  
+  Source: `public/logo-source-oz.png` · runtime: `public/oz-mark.png`  
+  Component: `src/components/brand.jsx` · regenerate: `node scripts/gen-icons-from-source.mjs`
+- **UI accent:** Forest green `#1f6b4f` · cream secondary `#d4b87a` · dark bg `#0a100e`
 - **Credit line:** “by OZ” only where identity needs it (Profil, splash)
 
 ## Theme tokens (preserve existing, clarify names)
@@ -43,7 +44,7 @@ Dark default (paper = ink ground):
 | `--text` | `#f2f3f7` | Ink |
 | `--text-dim` | `#9aa0ad` | Secondary |
 | `--border` | `rgba(255,255,255,0.08)` | Hairlines |
-| `--accent` | mode-dependent | Primary signal only |
+| `--accent` | `#1f6b4f` (forest) | Primary signal only |
 | `--font-display` | Space Grotesk | Titles, brand |
 | `--font-body` | Inter | UI body |
 | `--font-mono` | JetBrains Mono | Stats, chips meta |
@@ -54,9 +55,9 @@ Dark default (paper = ink ground):
 
 | Mode | `--accent` | Use |
 | --- | --- | --- |
-| m | `#2e7bff` | default serious gym |
-| f | `#8b5cf6` | optional |
-| n | `#6366f1` | neutral |
+| m | `#1f6b4f` | forest brand default |
+| f | `#2a8a62` | emerald |
+| n | `#1a5c44` | deep forest |
 
 **Discipline:** One solid accent CTA per screen. No gradient text. No aurora blobs on content. Glass only on the **logo mark** (brand signature), not every card.
 
@@ -124,7 +125,7 @@ No italic headers. Emphasis via weight or accent underline.
 ```
 /* Hallmark · project: OZGYM · genre: modern-minimal · tone: utilitarian
  * macrostructure family: workbench-lite (app shell)
- * brand: glass O+Z locked · accent: mode blue default
+ * brand: gothic OZ cream/green · accent: forest green
  * audience: private (OZ + few friends) · use: start workout
  */
 ```

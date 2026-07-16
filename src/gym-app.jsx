@@ -149,7 +149,7 @@ export default function App() {
   // Sync root/html/body background with theme so iOS home-indicator zone
   // never shows a stale white/black strip when toggling light ↔ dark.
   useEffect(() => {
-    const fallback = theme === "light" ? "#f4f5fa" : "#0c0d12";
+    const fallback = theme === "light" ? "#f4f6f3" : "#0a100e";
     // Prefer live CSS token from .ig-app (mode-specific dark tints etc.)
     const appEl = document.querySelector(".ig-app");
     const token = appEl

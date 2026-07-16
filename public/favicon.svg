@@ -1,34 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <defs>
-    <linearGradient id="body" x1="12" y1="4" x2="52" y2="60" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#5B8CFF" stop-opacity="0.55"/>
-      <stop offset="42%" stop-color="#1A1D28" stop-opacity="0.92"/>
-      <stop offset="100%" stop-color="#0C0E14" stop-opacity="1"/>
-    </linearGradient>
-    <linearGradient id="shine" x1="32" y1="6" x2="32" y2="34" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.42"/>
-      <stop offset="55%" stop-color="#FFFFFF" stop-opacity="0.06"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="32" cy="28" r="22" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#2E7BFF" stop-opacity="0.38"/>
-      <stop offset="100%" stop-color="#2E7BFF" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="rim" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35"/>
-      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.08"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.18"/>
-    </linearGradient>
-    <clipPath id="c"><rect x="4" y="4" width="56" height="56" rx="15"/></clipPath>
-  </defs>
-  <rect x="4" y="4" width="56" height="56" rx="15" fill="url(#body)"/>
-  <rect x="4.5" y="4.5" width="55" height="55" rx="14.5" stroke="url(#rim)" stroke-width="1" fill="none"/>
-  <g clip-path="url(#c)">
-    <circle cx="32" cy="30" r="20" fill="url(#glow)"/>
-    <rect x="4" y="4" width="56" height="30" fill="url(#shine)"/>
-    <path d="M12 10.5 C18 8.5 46 8.5 52 10.5" stroke="#FFFFFF" stroke-width="1.2" stroke-opacity="0.28" stroke-linecap="round"/>
-  </g>
-  <circle cx="32" cy="32" r="16" stroke="#FFFFFF" stroke-width="5.5" stroke-opacity="0.95" fill="none"/>
-  <circle cx="32" cy="32" r="12.2" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.14" fill="none"/>
-  <path d="M24 24 H40 L24 40 H40" stroke="#2E7BFF" stroke-width="5" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <image width="32" height="32" href="data:image/png;base64,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"/>
 </svg>
