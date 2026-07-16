@@ -121,6 +121,8 @@ export function machineLibraryEntries() {
       zone2: m.zone2 || null,
       equipment: "Maschine",
       hint: m.hint !== "Selbsterklärend" ? m.hint : "",
+      guide: m.guide || null,
+      benefit: m.benefit || "",
       nr: m.nr,
       machine: true,
       cleverFit: true,

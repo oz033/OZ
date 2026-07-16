@@ -1355,6 +1355,151 @@ button.ig-overview-col { cursor: pointer; }
 .ig-wo .ig-wo-ex-name {
   font-size: 20px;
 }
+.ig-wo-ex-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+.ig-wo-ex-title-row .ig-wo-ex-name {
+  margin: 0;
+}
+.ig-wo-info-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.ig-wo-info-btn:active {
+  transform: scale(0.94);
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+}
+.ig-wo-hint-btn {
+  width: 100%;
+  max-width: 300px;
+  border: 1px dashed var(--border);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.ig-wo-hint-btn:active {
+  border-color: var(--accent);
+  color: var(--text);
+}
+/* Fullscreen machine guide */
+.ig-wo-guide {
+  position: absolute;
+  inset: 0;
+  z-index: 150;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  animation: ig-fade-up 0.2s var(--ease-out);
+}
+.ig-wo-guide-panel {
+  background: var(--surface, #161822);
+  border-top: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  max-height: min(78dvh, 640px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+}
+.ig-wo-guide-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.ig-wo-guide-titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.ig-wo-guide-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+.ig-wo-guide-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  line-height: 1.15;
+}
+.ig-wo-guide-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ig-wo-guide-benefit {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-dim);
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  color: var(--text);
+}
+.ig-wo-guide-sec h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+.ig-wo-guide-sec ol,
+.ig-wo-guide-sec ul {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ig-wo-guide-sec li {
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.ig-wo-guide-sec.avoid li {
+  color: color-mix(in srgb, var(--warning, #e8a53a) 35%, var(--text));
+}
+.ig-wo-guide-foot {
+  flex-shrink: 0;
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+}
 .ig-wo-onehand {
   gap: 10px;
   padding-top: 10px;

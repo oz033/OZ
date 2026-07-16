@@ -20,6 +20,7 @@ import {
   Flame,
   Trophy,
   TrendingUp,
+  Info,
 } from "lucide-react";
 import { CountUp, RestRing, Confetti } from "../components/ui.jsx";
 import { EclipseMark } from "../components/brand.jsx";
@@ -107,6 +108,7 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
   const [suggestion, setSuggestion] = useState(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [noteFocused, setNoteFocused] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   /** px from layout bottom to top of keyboard (0 = no keyboard) */
   const [kbBottom, setKbBottom] = useState(0);
   const noteSaveTimer = useRef(null);
@@ -221,8 +223,19 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
   const exercise = item?.name || "";
   const targetSets = item?.sets || 3;
   const meta = item?.entry || {};
+  const exerciseGuide = meta?.guide || null;
+  const hasGuide =
+    exerciseGuide &&
+    (exerciseGuide.setup?.length ||
+      exerciseGuide.move?.length ||
+      exerciseGuide.avoid?.length);
   const doneCount = setsFor(exercise);
   const isLast = idx === queue.length - 1;
+
+  // Beim Übungswechsel Guide schließen
+  useEffect(() => {
+    setGuideOpen(false);
+  }, [exercise]);
 
   const logsForExercise = useMemo(
     () => data.logs.filter((l) => l.exercise === exercise),
@@ -945,7 +958,23 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
               )}
               <div className="ig-wo-card-top">
                 <div className="ig-wo-card-info">
-                  <h3 className="ig-wo-ex-name">{e}</h3>
+                  <div className="ig-wo-ex-title-row">
+                    <h3 className="ig-wo-ex-name">{e}</h3>
+                    {active && (m?.guide || m?.hint || m?.benefit) && (
+                      <button
+                        type="button"
+                        className="ig-wo-info-btn"
+                        data-no-swipe
+                        onClick={() => {
+                          setGuideOpen(true);
+                          playSound("tap", soundOn);
+                        }}
+                        aria-label={`Anleitung für ${e}`}
+                      >
+                        <Info size={18} strokeWidth={2.25} />
+                      </button>
+                    )}
+                  </div>
                   <div className="ig-plan-badges">
                     {m?.nr && <span className="ig-badge">Gerät {m.nr}</span>}
                     <span className="ig-badge">{it.sets} × {it.reps} Wdh.</span>
@@ -968,7 +997,17 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
                 />
               )}
               {active && m?.hint && !noteDraft.trim() && (
-                <p className="ig-wo-hint dim">{shortTip(m.hint, 72)}</p>
+                <button
+                  type="button"
+                  className="ig-wo-hint dim ig-wo-hint-btn"
+                  data-no-swipe
+                  onClick={() => {
+                    setGuideOpen(true);
+                    playSound("tap", soundOn);
+                  }}
+                >
+                  {shortTip(m.hint, 56)} · Info
+                </button>
               )}
               {active && noteDraft.trim() && (
                 <p className="ig-wo-hint note">{shortTip(noteDraft, 80)}</p>
@@ -978,6 +1017,89 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
         })}
       </div>
       </div>
+
+      {/* Ausführliche Geräte-Anleitung */}
+      {guideOpen && (
+        <div
+          className="ig-wo-guide"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Anleitung ${exercise}`}
+        >
+          <div className="ig-wo-guide-panel">
+            <header className="ig-wo-guide-head">
+              <div className="ig-wo-guide-titles">
+                <span className="ig-wo-guide-kicker">Geräte-Anleitung</span>
+                <h2 className="ig-wo-guide-title">{exercise}</h2>
+                {meta?.nr != null && (
+                  <span className="ig-badge">Gerät {meta.nr}</span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="ig-wo-exit"
+                onClick={() => setGuideOpen(false)}
+                aria-label="Anleitung schließen"
+              >
+                <X size={20} />
+              </button>
+            </header>
+            <div className="ig-wo-guide-body">
+              {meta?.benefit && (
+                <p className="ig-wo-guide-benefit">{meta.benefit}</p>
+              )}
+              {hasGuide ? (
+                <>
+                  {exerciseGuide.setup?.length > 0 && (
+                    <section className="ig-wo-guide-sec">
+                      <h3>1. Einstellen</h3>
+                      <ol>
+                        {exerciseGuide.setup.map((s, i) => (
+                          <li key={`s${i}`}>{s}</li>
+                        ))}
+                      </ol>
+                    </section>
+                  )}
+                  {exerciseGuide.move?.length > 0 && (
+                    <section className="ig-wo-guide-sec">
+                      <h3>2. Ausführung</h3>
+                      <ol>
+                        {exerciseGuide.move.map((s, i) => (
+                          <li key={`m${i}`}>{s}</li>
+                        ))}
+                      </ol>
+                    </section>
+                  )}
+                  {exerciseGuide.avoid?.length > 0 && (
+                    <section className="ig-wo-guide-sec avoid">
+                      <h3>3. Fehler vermeiden</h3>
+                      <ul>
+                        {exerciseGuide.avoid.map((s, i) => (
+                          <li key={`a${i}`}>{s}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                </>
+              ) : (
+                <p className="ig-wo-guide-benefit">
+                  {meta?.hint ||
+                    "Stelle Sitz und Polster bequem ein, bewege das Gewicht kontrolliert und atme gleichmäßig."}
+                </p>
+              )}
+            </div>
+            <div className="ig-wo-guide-foot">
+              <button
+                type="button"
+                className="ig-btn-primary wide"
+                onClick={() => setGuideOpen(false)}
+              >
+                Verstanden
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Ein-Hand-Zone: Exit X + Notiz + Steppers + CTA — Safari moves keyboard, no JS lift */}
       <div

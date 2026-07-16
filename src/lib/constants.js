@@ -15,8 +15,24 @@ export const EXERCISE_META = {
     nr: 12,
     order: 1,
     reps: "8–12",
-    hint: "Rechtwinkel der Arme, Griffe auf Schulterhöhe",
+    hint: "Griffe auf Schulterhöhe, Ellbogen ~90°",
     benefit: "Für breite Schultern & starke Schultermuskulatur",
+    guide: {
+      setup: [
+        "Sitzhöhe so einstellen, dass die Griffe auf Schulterhöhe sind.",
+        "Rücken fest an die Lehne, Füße flach auf dem Boden.",
+        "Griffe greifen, Handgelenke gerade, Ellbogen unter den Händen (~90°).",
+      ],
+      move: [
+        "Gewicht kontrolliert nach oben drücken, bis die Arme fast gestreckt sind (Ellbogen nicht durchdrücken).",
+        "Kurz oben anhalten, Schultern nicht hochziehen.",
+        "Langsam wieder absenken, bis die Oberarme etwa waagrecht / 90° sind.",
+      ],
+      avoid: [
+        "Nicht mit dem Rücken vom Polster abheben.",
+        "Kein Schwung aus den Beinen oder dem Hohlkreuz.",
+      ],
+    },
   },
   Chestpress: {
     group: "Oberkörper",
@@ -25,8 +41,24 @@ export const EXERCISE_META = {
     nr: 10,
     order: 2,
     reps: "8–12",
-    hint: "Rechtwinkel der Arme, Griffe auf Brusthöhe",
+    hint: "Griffe auf Brusthöhe, Ellbogen ~90°",
     benefit: "Baut die Brustmuskulatur auf",
+    guide: {
+      setup: [
+        "Sitz so, dass die Griffe auf mittlerer Brusthöhe liegen.",
+        "Schulterblätter leicht zusammen und nach unten, Rücken an der Lehne.",
+        "Füße fest am Boden, Bauch leicht anspannen.",
+      ],
+      move: [
+        "Griffe nach vorne drücken, bis die Arme fast gestreckt sind.",
+        "Brust anspannen, Schultern bleiben unten.",
+        "Kontrolliert zurückführen, bis die Ellbogen etwa 90° sind — nicht zu weit hinter den Körper.",
+      ],
+      avoid: [
+        "Schultern nicht nach vorne rollen.",
+        "Gewicht nicht abfedern oder fallen lassen.",
+      ],
+    },
   },
   Pulldown: {
     group: "Oberkörper",
@@ -35,8 +67,24 @@ export const EXERCISE_META = {
     nr: 13,
     order: 3,
     reps: "8–12",
-    hint: "Brust zum Polster, Ellbogen nach unten zur Körpermitte",
+    hint: "Brust zum Polster, Ellbogen zur Körpermitte",
     benefit: "Trainiert den breiten Rückenmuskel (Lat)",
+    guide: {
+      setup: [
+        "Oberschenkelpolster fest auf die Oberschenkel drücken (Stabilität).",
+        "Breiten Griff greifen, etwas weiter als schulterbreit.",
+        "Leicht nach hinten lehnen (ca. 10–15°), Brust raus.",
+      ],
+      move: [
+        "Stange mit den Ellbogen nach unten/hinten zur oberen Brust ziehen.",
+        "Am tiefsten Punkt Schulterblätter zusammenziehen, kurz halten.",
+        "Stange kontrolliert nach oben führen, Arme strecken ohne aus dem Sitz zu springen.",
+      ],
+      avoid: [
+        "Nicht mit dem ganzen Oberkörper reißen.",
+        "Stange nicht hinter den Nacken ziehen.",
+      ],
+    },
   },
   "Low Row": {
     group: "Oberkörper",
@@ -45,8 +93,24 @@ export const EXERCISE_META = {
     nr: 16,
     order: 4,
     reps: "8–12",
-    hint: "Brust zum Polster, Ellbogen nach hinten ziehen",
+    hint: "Brust am Polster, Ellbogen nach hinten",
     benefit: "Stärkt den mittleren Rücken & hintere Schulter",
+    guide: {
+      setup: [
+        "Brust fest gegen das Polster, Füße auf der Plattform oder dem Boden.",
+        "Griffe greifen, Arme gestreckt, Schultern entspannt nach unten.",
+        "Sitzhöhe so, dass die Griffe auf etwa Brusthöhe kommen.",
+      ],
+      move: [
+        "Ellbogen eng am Körper nach hinten ziehen, als würdest du etwas in die Hosentasche stecken.",
+        "Schultern hinten zusammenziehen, Brust bleibt am Polster.",
+        "Langsam nach vorne ausstrecken, Spannung im Rücken halten.",
+      ],
+      avoid: [
+        "Oberkörper nicht nach hinten schwingen.",
+        "Schultern nicht zu den Ohren hochziehen.",
+      ],
+    },
   },
   "Lower Back": {
     group: "Oberkörper",
@@ -55,8 +119,24 @@ export const EXERCISE_META = {
     nr: 23,
     order: 7,
     reps: "8–12",
-    hint: "Hüfte nach hinten, Schultern auf dem oberen Polster",
+    hint: "Hüfte am Polster, Bewegung aus dem unteren Rücken",
     benefit: "Kräftigt den unteren Rücken & Rumpf",
+    guide: {
+      setup: [
+        "Hüftpolster so einstellen, dass die Hüftbeuge genau am Polster sitzt.",
+        "Füße flach, Beine leicht gebeugt oder wie am Gerät vorgesehen.",
+        "Arme verschränkt vor der Brust oder am Griff halten — nicht mit den Händen ziehen.",
+      ],
+      move: [
+        "Oberkörper kontrolliert nach hinten strecken (Rücken aufrichten).",
+        "Am oberen Punkt kurz halten, unterer Rücken aktiv.",
+        "Langsam nach vorne absenken, Rücken bleibt gerade — nicht rund einsinken.",
+      ],
+      avoid: [
+        "Kein Schwung, keine ruckartigen Bewegungen.",
+        "Nicht ins extreme Hohlkreuz pressen.",
+      ],
+    },
   },
   "Arm Extension": {
     group: "Oberkörper",
@@ -64,8 +144,24 @@ export const EXERCISE_META = {
     nr: 18,
     order: 5,
     reps: "8–12",
-    hint: "Oberarme am Körper, nur die Unterarme bewegen",
+    hint: "Oberarme fix, nur Unterarme strecken",
     benefit: "Formt die Trizeps (Rückseite der Arme)",
+    guide: {
+      setup: [
+        "Sitzhöhe: Oberarme liegen bequem auf dem Polster, Ellbogen fest.",
+        "Griffe greifen, Handgelenke neutral.",
+        "Rücken anlehnen, Ellbogen zeigen nach vorne/unten und bleiben dort.",
+      ],
+      move: [
+        "Nur die Unterarme strecken, bis die Arme fast gerade sind.",
+        "Trizeps anspannen, kurz halten.",
+        "Kontrolliert zurück in die Startposition (nicht unter das Polster federn).",
+      ],
+      avoid: [
+        "Ellbogen nicht vom Polster heben.",
+        "Kein Schwung aus Schultern oder Rücken.",
+      ],
+    },
   },
   "Arm Curl": {
     group: "Oberkörper",
@@ -73,8 +169,24 @@ export const EXERCISE_META = {
     nr: 19,
     order: 6,
     reps: "8–12",
-    hint: "Oberarme am Körper, nur die Unterarme bewegen",
+    hint: "Oberarme fix, nur Unterarme beugen",
     benefit: "Baut den Bizeps auf (Vorderseite der Arme)",
+    guide: {
+      setup: [
+        "Sitz so, dass die Oberarme flach auf dem Polster liegen.",
+        "Ellbogen am unteren Rand des Polsters fixiert.",
+        "Griffe von unten greifen, Handgelenke gerade.",
+      ],
+      move: [
+        "Unterarme nach oben beugen, bis die Hände fast bei den Schultern sind.",
+        "Bizeps anspannen, kurz halten.",
+        "Langsam absenken, bis die Arme fast gestreckt sind — Spannung behalten.",
+      ],
+      avoid: [
+        "Oberarme nicht abheben oder wackeln.",
+        "Nicht mit dem Oberkörper mitreißen.",
+      ],
+    },
   },
   "Leg Press": {
     group: "Unterkörper",
@@ -83,8 +195,24 @@ export const EXERCISE_META = {
     nr: 3,
     order: 1,
     reps: "6–10",
-    hint: "2er- oder 3er-Linie, Fußspitzen leicht nach außen",
+    hint: "Füße schulterbreit, Knie folgen den Zehen",
     benefit: "Der ultimative Bein-Boost (Quadrizeps, Po)",
+    guide: {
+      setup: [
+        "Rücken und Becken fest an die Lehne, Kopf entspannt.",
+        "Füße schulterbreit auf die Platte (2er-/3er-Linie), Zehen leicht nach außen.",
+        "Knie in einer Linie mit den Zehen — nicht nach innen knicken.",
+      ],
+      move: [
+        "Sicherung lösen, Platte kontrolliert absenken, bis die Knie ca. 90° sind.",
+        "Durch die Fersen / ganze Fußsohle nach oben drücken.",
+        "Oben Knie nicht komplett durchdrücken, Spannung in den Beinen halten.",
+      ],
+      avoid: [
+        "Po nicht von der Lehne abheben (zu tief / zu schwer).",
+        "Knie nicht nach innen knicken.",
+      ],
+    },
   },
   "Leg Extension": {
     group: "Unterkörper",
@@ -92,8 +220,24 @@ export const EXERCISE_META = {
     nr: 2,
     order: 2,
     reps: "8–12",
-    hint: "Polster oberhalb vom Knöchel, Fußspitzen nach oben strecken",
+    hint: "Polster über den Knöcheln, Knie in der Achse",
     benefit: "Isoliert den vorderen Oberschenkel",
+    guide: {
+      setup: [
+        "Rücken an der Lehne, Kniegelenke am Ende der Sitzfläche (Achse des Geräts).",
+        "Unteres Polster knapp oberhalb der Knöchel platzieren.",
+        "Griffe an den Seiten halten, Oberkörper ruhig.",
+      ],
+      move: [
+        "Beine strecken, bis sie fast gerade sind — kontrolliert, ohne zu schnappen.",
+        "Oben kurz den vorderen Oberschenkel anspannen.",
+        "Langsam absenken, bis etwas unter 90° — nicht mit Schwung aufschlagen.",
+      ],
+      avoid: [
+        "Hüfte nicht vom Sitz heben.",
+        "Keine ruckartigen Endpositionen.",
+      ],
+    },
   },
   "Leg Curl": {
     group: "Unterkörper",
@@ -101,8 +245,24 @@ export const EXERCISE_META = {
     nr: 7,
     order: 3,
     reps: "8–12",
-    hint: "Polster oberhalb vom Knöchel, Fußspitzen nach oben strecken",
+    hint: "Polster über den Knöcheln, Hüfte am Polster",
     benefit: "Trainiert die hintere Oberschenkelmuskulatur",
+    guide: {
+      setup: [
+        "Bauch/Hüfte am Polster, Knie frei über der Kante (Geräteachse).",
+        "Rollenpolster knapp über den Fersen/Knöcheln.",
+        "Griffe festhalten, Hüfte bleibt am Polster.",
+      ],
+      move: [
+        "Fersen Richtung Po ziehen, hintere Oberschenkel anspannen.",
+        "Oben kurz halten.",
+        "Langsam strecken, ohne das Gewicht unkontrolliert fallen zu lassen.",
+      ],
+      avoid: [
+        "Hüfte nicht hochdrücken / Hohlkreuz.",
+        "Kein Schwung mit dem ganzen Körper.",
+      ],
+    },
   },
   Adductor: {
     group: "Unterkörper",
@@ -110,8 +270,24 @@ export const EXERCISE_META = {
     nr: 8,
     order: 4,
     reps: "8–12",
-    hint: "Selbsterklärend",
+    hint: "Polster an der Innenseite der Knie",
     benefit: "Stärkt die Innenseite der Oberschenkel",
+    guide: {
+      setup: [
+        "Sitz aufrecht, Rücken an der Lehne.",
+        "Polster an der Innenseite der Knie/Oberschenkel anlegen.",
+        "Startposition: Beine geöffnet im angenehmen, nicht überdehnten Winkel.",
+      ],
+      move: [
+        "Beine gegen den Widerstand zusammenführen.",
+        "Innen-Oberschenkel anspannen, kurz halten.",
+        "Kontrolliert wieder öffnen — nicht auseinanderschnappen lassen.",
+      ],
+      avoid: [
+        "Nicht mit dem Oberkörper mithelfen.",
+        "Kein zu großer Startwinkel mit Schmerzen in der Leiste.",
+      ],
+    },
   },
   Abductor: {
     group: "Unterkörper",
@@ -119,8 +295,24 @@ export const EXERCISE_META = {
     nr: 1,
     order: 5,
     reps: "8–12",
-    hint: "Selbsterklärend",
+    hint: "Polster an der Außenseite der Knie",
     benefit: "Aktiviert die Außenseite der Oberschenkel & Po",
+    guide: {
+      setup: [
+        "Sitz aufrecht, Rücken an der Lehne.",
+        "Polster an der Außenseite der Knie.",
+        "Füße auf den Ablagen, Knie etwa 90°.",
+      ],
+      move: [
+        "Beine gegen den Widerstand nach außen drücken.",
+        "Po/Außenseite anspannen, kurz halten.",
+        "Langsam wieder zusammenführen.",
+      ],
+      avoid: [
+        "Oberkörper nicht zur Seite kippen.",
+        "Bewegung nicht zu klein und hektisch machen.",
+      ],
+    },
   },
   "Abdominal Crunch": {
     group: "Unterkörper",
@@ -128,8 +320,24 @@ export const EXERCISE_META = {
     nr: 20,
     order: 6,
     reps: "8–12",
-    hint: "Selbsterklärend",
+    hint: "Bewegung aus der Bauchmitte, nicht aus dem Nacken",
     benefit: "Für eine starke Körpermitte",
+    guide: {
+      setup: [
+        "Sitz so, dass die Brustpolster bequem auf dem oberen Brustkorb liegen.",
+        "Füße unter die Fußrollen oder flach am Boden — je nach Gerät.",
+        "Hände an den Griffen, Nacken lang, Kinn leicht Richtung Brust.",
+      ],
+      move: [
+        "Oberkörper nach vorne/unten rollen, als würdest du die Rippen zu den Hüften ziehen.",
+        "Bauch anspannen, kurz halten.",
+        "Kontrolliert zurück in die Ausgangsposition, Bauchspannung behalten.",
+      ],
+      avoid: [
+        "Nicht am Nacken ziehen.",
+        "Keine Schwungbewegung aus dem Schwung der Arme.",
+      ],
+    },
   },
 };
 
@@ -178,6 +386,8 @@ export const LIBRARY_DEFAULT = Object.entries(EXERCISE_META).map(([name, m]) => 
   zone2: m.zone2 || null,
   equipment: "Maschine",
   hint: m.hint !== "Selbsterklärend" ? m.hint : "",
+  guide: m.guide || null,
+  benefit: m.benefit || "",
   nr: m.nr,
   machine: true,
 }));
