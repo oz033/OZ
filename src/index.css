@@ -1365,16 +1365,19 @@ button.ig-overview-col { cursor: pointer; }
 .ig-wo-ex-title-row .ig-wo-ex-name {
   margin: 0;
 }
+/* Info opposite X in bottom bar (right) */
 .ig-wo-info-btn {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border);
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
   color: var(--accent);
   cursor: pointer;
   padding: 0;
@@ -1382,8 +1385,16 @@ button.ig-overview-col { cursor: pointer; }
   touch-action: manipulation;
 }
 .ig-wo-info-btn:active {
-  transform: scale(0.94);
-  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  transform: scale(0.96);
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-2));
+}
+.ig-wo-info-btn:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.ig-wo-bottom-top .ig-wo-info-btn {
+  /* match exit button size/position on the right */
+  justify-self: end;
 }
 .ig-wo-hint-btn {
   width: 100%;

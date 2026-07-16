@@ -958,23 +958,7 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
               )}
               <div className="ig-wo-card-top">
                 <div className="ig-wo-card-info">
-                  <div className="ig-wo-ex-title-row">
-                    <h3 className="ig-wo-ex-name">{e}</h3>
-                    {active && (m?.guide || m?.hint || m?.benefit) && (
-                      <button
-                        type="button"
-                        className="ig-wo-info-btn"
-                        data-no-swipe
-                        onClick={() => {
-                          setGuideOpen(true);
-                          playSound("tap", soundOn);
-                        }}
-                        aria-label={`Anleitung für ${e}`}
-                      >
-                        <Info size={18} strokeWidth={2.25} />
-                      </button>
-                    )}
-                  </div>
+                  <h3 className="ig-wo-ex-name">{e}</h3>
                   <div className="ig-plan-badges">
                     {m?.nr && <span className="ig-badge">Gerät {m.nr}</span>}
                     <span className="ig-badge">{it.sets} × {it.reps} Wdh.</span>
@@ -1128,7 +1112,18 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
               />
             ))}
           </div>
-          <span className="ig-wo-exit-spacer" aria-hidden="true" />
+          <button
+            type="button"
+            className="ig-wo-info-btn"
+            disabled={!meta?.guide && !meta?.hint && !meta?.benefit}
+            onClick={() => {
+              setGuideOpen(true);
+              playSound("tap", soundOn);
+            }}
+            aria-label={`Anleitung für ${exercise || "Übung"}`}
+          >
+            <Info size={20} strokeWidth={2.25} />
+          </button>
         </div>
         {milestone && !noteFocused && (
           <span
