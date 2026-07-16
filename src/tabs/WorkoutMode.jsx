@@ -21,6 +21,7 @@ import {
   Trophy,
   TrendingUp,
   Info,
+  ChevronUp,
 } from "lucide-react";
 import { CountUp, RestRing, Confetti } from "../components/ui.jsx";
 import { EclipseMark } from "../components/brand.jsx";
@@ -91,10 +92,21 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
   const [noteDraft, setNoteDraft] = useState("");
   const [noteFocused, setNoteFocused] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  /** Bottom sheet: swipe down to collapse, up to expand (more room for GIF) */
+  const [bottomCollapsed, setBottomCollapsed] = useState(false);
   /** px from layout bottom to top of keyboard (0 = no keyboard) */
   const [kbBottom, setKbBottom] = useState(0);
   const noteSaveTimer = useRef(null);
   const noteInputRef = useRef(null);
+  const bottomSheetRef = useRef(null);
+  const sheetDragRef = useRef({
+    active: false,
+    y0: 0,
+    dy: 0,
+    lastY: 0,
+    lastT: 0,
+    vy: 0,
+  });
 
   // Live refs for swipe handlers (avoid stale closures / React re-renders mid-drag)
   const idxRef = useRef(firstOpen === -1 ? 0 : firstOpen);
@@ -769,6 +781,101 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
     };
   }, [phase, applyTrackX, settleTrack, soundOn, hapticsOn]);
 
+  // Note focus always expands the bottom sheet
+  useEffect(() => {
+    if (noteFocused) setBottomCollapsed(false);
+  }, [noteFocused]);
+
+  // Vertical swipe on bottom sheet handle / chrome: down = collapse, up = expand
+  useEffect(() => {
+    if (phase !== "lift") return;
+    const el = bottomSheetRef.current;
+    if (!el) return;
+    const d = sheetDragRef.current;
+    let pid = null;
+
+    const onStart = (e) => {
+      if (noteFocused) return;
+      // Only drag from handle or top chrome (not steppers / inputs)
+      const t = e.target;
+      if (!(t instanceof Element)) return;
+      if (
+        !t.closest(".ig-wo-bottom-handle") &&
+        !t.closest(".ig-wo-bottom-top") &&
+        !t.closest(".ig-wo-bottom-peek")
+      ) {
+        return;
+      }
+      if (t.closest("button, input, a, [data-no-sheet-drag]")) return;
+      d.active = true;
+      d.y0 = e.clientY;
+      d.dy = 0;
+      d.lastY = e.clientY;
+      d.lastT = performance.now();
+      d.vy = 0;
+      pid = e.pointerId;
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+    };
+
+    const onMove = (e) => {
+      if (!d.active) return;
+      if (pid != null && e.pointerId !== pid) return;
+      const y = e.clientY;
+      const now = performance.now();
+      const dt = Math.max(1, now - d.lastT);
+      d.vy = (y - d.lastY) / dt;
+      d.lastY = y;
+      d.lastT = now;
+      d.dy = y - d.y0;
+      // Prevent page bounce while dragging sheet
+      if (Math.abs(d.dy) > 6) e.preventDefault();
+    };
+
+    const onEnd = (e) => {
+      if (!d.active) return;
+      if (pid != null && e.pointerId != null && e.pointerId !== pid) return;
+      d.active = false;
+      pid = null;
+      try {
+        if (e.pointerId != null) el.releasePointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+      const dy = d.dy;
+      const vy = d.vy;
+      const fling = Math.abs(vy) > 0.35;
+      const dist = Math.abs(dy) > 36;
+      if ((dy > 28 && dist) || (vy > 0.35 && fling && dy > 8)) {
+        setBottomCollapsed(true);
+        if (hapticsOn) buzz(8, true);
+        playSound("tap", soundOn);
+      } else if ((dy < -28 && dist) || (vy < -0.35 && fling && dy < -8)) {
+        setBottomCollapsed(false);
+        if (hapticsOn) buzz(8, true);
+        playSound("tap", soundOn);
+      }
+      d.dy = 0;
+      d.vy = 0;
+    };
+
+    el.addEventListener("pointerdown", onStart);
+    el.addEventListener("pointermove", onMove, { passive: false });
+    el.addEventListener("pointerup", onEnd);
+    el.addEventListener("pointercancel", onEnd);
+    el.addEventListener("lostpointercapture", onEnd);
+    return () => {
+      el.removeEventListener("pointerdown", onStart);
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerup", onEnd);
+      el.removeEventListener("pointercancel", onEnd);
+      el.removeEventListener("lostpointercapture", onEnd);
+    };
+  }, [phase, noteFocused, soundOn, hapticsOn]);
+
   // Nächste offene Übung (für Coach-Karte in der Pause)
   const nextUp = useMemo(() => {
     if (item && !itemDone(item)) return null;
@@ -1122,17 +1229,38 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
         </div>
       )}
 
-      {/* Ein-Hand-Zone: Exit X + Notiz + Steppers + CTA — Safari moves keyboard, no JS lift */}
+      {/* Ein-Hand-Zone: swipe ↓ collapse · ↑ expand — more room for GIF */}
       <div
+        ref={bottomSheetRef}
         className={
-          "ig-wo-bottom ig-wo-onehand" + (noteFocused ? " note-focus" : "")
+          "ig-wo-bottom ig-wo-onehand" +
+          (noteFocused ? " note-focus" : "") +
+          (bottomCollapsed ? " is-collapsed" : "")
         }
       >
-        {/* Leiste: X (beenden) · Satz-Dots · Platzhalter für Balance */}
+        <button
+          type="button"
+          className="ig-wo-bottom-handle"
+          aria-label={
+            bottomCollapsed
+              ? "Steuerung einblenden"
+              : "Steuerung verkleinern, nach unten wischen"
+          }
+          aria-expanded={!bottomCollapsed}
+          onClick={() => {
+            setBottomCollapsed((c) => !c);
+            playSound("tap", soundOn);
+            if (hapticsOn) buzz(8, true);
+          }}
+        >
+          <span className="ig-wo-bottom-handle-bar" aria-hidden="true" />
+        </button>
+        {/* Leiste: X (beenden) · Satz-Dots · Info — always visible */}
         <div className="ig-wo-bottom-top">
           <button
             type="button"
             className="ig-wo-exit"
+            data-no-sheet-drag
             onClick={() => {
               const open = queue.some((it) => !itemDone(it));
               if (
@@ -1163,6 +1291,7 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
           <button
             type="button"
             className="ig-wo-info-btn"
+            data-no-sheet-drag
             onClick={() => {
               setGuideOpen(true);
               playSound("tap", soundOn);
@@ -1172,6 +1301,39 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
             <Info size={20} strokeWidth={2.25} />
           </button>
         </div>
+
+        {bottomCollapsed && (
+          <div className="ig-wo-bottom-peek" role="group" aria-label="Kompakte Steuerung">
+            <button
+              type="button"
+              className="ig-wo-bottom-peek-expand"
+              onClick={() => {
+                setBottomCollapsed(false);
+                playSound("tap", soundOn);
+              }}
+              aria-label="Steuerung wieder einblenden"
+            >
+              <ChevronUp size={16} strokeWidth={2.5} aria-hidden="true" />
+              <span className="ig-wo-bottom-peek-text">
+                {weight !== "" && reps !== ""
+                  ? `${weight} kg × ${reps} · wischen ↑`
+                  : "Steuerung · wischen ↑"}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="ig-wo-bottom-peek-cta"
+              data-no-sheet-drag
+              disabled={doneCount >= targetSets}
+              onClick={() => completeSet()}
+            >
+              <Check size={16} strokeWidth={2.5} />
+              Satz
+            </button>
+          </div>
+        )}
+
+        <div className="ig-wo-bottom-body" aria-hidden={bottomCollapsed}>
         {milestone && !noteFocused && (
           <span
             className={"ig-wo-milestone" + (milestone.smart ? " smart" : "")}
@@ -1204,6 +1366,7 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
             "ig-wo-note-edit" + (noteFocused ? " is-dock" : "")
           }
           data-no-swipe
+          data-no-sheet-drag
           style={
             noteFocused
               ? { bottom: kbBottom > 0 ? kbBottom : 0 }
@@ -1364,12 +1527,14 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
         <button
           type="button"
           className="ig-btn-primary wide xl ig-wo-cta"
+          data-no-sheet-drag
           disabled={doneCount >= targetSets}
           onClick={completeSet}
         >
           <Check size={22} strokeWidth={2.5} />
           {doneCount >= targetSets ? "Übung fertig" : "Satz abschließen"}
         </button>
+        </div>
       </div>
 
       {(phase === "rest" || phase === "go") && (
