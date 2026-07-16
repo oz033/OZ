@@ -1014,16 +1014,7 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
             <header className="ig-wo-guide-head">
               <div className="ig-wo-guide-titles">
                 <span className="ig-wo-guide-kicker">Geräte-Anleitung</span>
-                <div className="ig-wo-guide-title-row">
-                  <h2 className="ig-wo-guide-title">{exercise}</h2>
-                  <ExerciseDemo
-                    compact
-                    exerciseName={exercise}
-                    gif={meta?.gif}
-                    image={meta?.image}
-                    className="ig-wo-guide-thumb"
-                  />
-                </div>
+                <h2 className="ig-wo-guide-title">{exercise}</h2>
                 {meta?.nr != null && (
                   <span className="ig-badge">Gerät {meta.nr}</span>
                 )}
@@ -1037,6 +1028,15 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
                 <X size={20} />
               </button>
             </header>
+            {/* Large centered demo — fills the open visual space */}
+            <div className="ig-wo-guide-hero">
+              <ExerciseDemo
+                exerciseName={exercise}
+                gif={meta?.gif}
+                image={meta?.image}
+                className="ig-wo-guide-demo"
+              />
+            </div>
             <div className="ig-wo-guide-body">
               {meta?.benefit && (
                 <p className="ig-wo-guide-benefit">{meta.benefit}</p>
