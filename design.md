@@ -26,10 +26,10 @@ App is a **phone shell** (single viewport, bottom tabs) — not a marketing site
 ## Brand (locked — do not redesign without ask)
 
 - **Wordmark:** OZGYM (Space Grotesk, letter-spacing ~0.14–0.18em, weight 700)
-- **Mark:** Gothic blackletter **OZ** monogram · cream on forest green  
+- **Mark:** Light tile · charcoal brush **O** · orange **Z**  
   Source: `public/logo-source-oz.png` · runtime: `public/oz-mark.png`  
   Component: `src/components/brand.jsx` · regenerate: `node scripts/gen-icons-from-source.mjs`
-- **UI accent:** Forest green `#1f6b4f` · cream secondary `#d4b87a` · dark bg `#0a100e`
+- **UI accent:** Orange `#f5a524` · charcoal secondary · dark bg `#0c0d12` · light cream `#f3f0ea`
 - **Credit line:** “by OZ” only where identity needs it (Profil, splash)
 
 ## Theme tokens (preserve existing, clarify names)
@@ -44,7 +44,7 @@ Dark default (paper = ink ground):
 | `--text` | `#f2f3f7` | Ink |
 | `--text-dim` | `#9aa0ad` | Secondary |
 | `--border` | `rgba(255,255,255,0.08)` | Hairlines |
-| `--accent` | `#1f6b4f` (forest) | Primary signal only |
+| `--accent` | `#f5a524` (orange) | Primary signal only |
 | `--font-display` | Space Grotesk | Titles, brand |
 | `--font-body` | Inter | UI body |
 | `--font-mono` | JetBrains Mono | Stats, chips meta |
@@ -55,9 +55,9 @@ Dark default (paper = ink ground):
 
 | Mode | `--accent` | Use |
 | --- | --- | --- |
-| m | `#1f6b4f` | forest brand default |
-| f | `#2a8a62` | emerald |
-| n | `#1a5c44` | deep forest |
+| m | `#f5a524` | orange brand default |
+| f | `#ff9f1a` | amber |
+| n | `#e8940f` | deep gold |
 
 **Discipline:** One solid accent CTA per screen. No gradient text. No aurora blobs on content. Glass only on the **logo mark** (brand signature), not every card.
 
@@ -125,7 +125,7 @@ No italic headers. Emphasis via weight or accent underline.
 ```
 /* Hallmark · project: OZGYM · genre: modern-minimal · tone: utilitarian
  * macrostructure family: workbench-lite (app shell)
- * brand: gothic OZ cream/green · accent: forest green
+ * brand: light O brush + orange Z · accent: orange
  * audience: private (OZ + few friends) · use: start workout
  */
 ```

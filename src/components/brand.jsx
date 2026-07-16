@@ -1,4 +1,4 @@
-/* OZGYM Mark — Gothic OZ monogram, forest green + cream */
+/* OZGYM Mark — Light tile: charcoal brush O + orange Z */
 
 import React from "react";
 
@@ -16,7 +16,7 @@ export function OzGymMark({
   const mode = variant === "color" ? "glass" : variant;
   const filter =
     mode === "mono"
-      ? "grayscale(1) contrast(1.15) brightness(1.05)"
+      ? "grayscale(1) contrast(1.1)"
       : "none";
 
   return (
@@ -40,7 +40,7 @@ export function OzGymMark({
         display: "block",
         flexShrink: 0,
         filter,
-        background: "#0f4a3c",
+        background: "#f3f0ea",
         WebkitUserDrag: "none",
         userSelect: "none",
       }}

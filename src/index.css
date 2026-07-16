@@ -90,79 +90,78 @@ html, body, #root {
 }
 .ig-app input, .ig-app select, .ig-app textarea { user-select: text; -webkit-user-select: text; }
 
-/* ---------- Mode-Akzente — Brand: Forest Green + Cream (gothic logo) ---------- */
+/* ---------- Mode-Akzente — Brand: Orange Z + charcoal O (light icon) ---------- */
 .ig-app[data-mode="m"] {
-  --accent: #1f6b4f;
-  --accent-2: #d4b87a;
-  --accent-rgb: 31, 107, 79;
-  --on-accent: #ffffff;
+  --accent: #f5a524;
+  --accent-2: #2a2a2c;
+  --accent-rgb: 245, 165, 36;
+  --on-accent: #1a1a1c;
 }
 .ig-app[data-mode="f"] {
-  --accent: #2a8a62;
-  --accent-2: #e8d5a8;
-  --accent-rgb: 42, 138, 98;
-  --on-accent: #ffffff;
+  --accent: #ff9f1a;
+  --accent-2: #3d3d40;
+  --accent-rgb: 255, 159, 26;
+  --on-accent: #1a1a1c;
 }
 .ig-app[data-mode="n"], .ig-app:not([data-mode]) {
-  --accent: #1a5c44;
-  --accent-2: #c9a86c;
-  --accent-rgb: 26, 92, 68;
-  --on-accent: #ffffff;
+  --accent: #e8940f;
+  --accent-2: #1c1c1e;
+  --accent-rgb: 232, 148, 15;
+  --on-accent: #1a1a1c;
 }
 
-/* Onboarding: Akzent folgt Geschlechts-Auswahl (grünes Brand) */
+/* Onboarding: Akzent folgt Brand Orange */
 .ig-onboarding[data-mode="f"] {
-  --accent: #2a8a62;
-  --accent-2: #e8d5a8;
-  --accent-rgb: 42, 138, 98;
+  --accent: #ff9f1a;
+  --accent-2: #3d3d40;
+  --accent-rgb: 255, 159, 26;
 }
 .ig-onboarding[data-mode="m"] {
-  --accent: #1f6b4f;
-  --accent-2: #d4b87a;
-  --accent-rgb: 31, 107, 79;
+  --accent: #f5a524;
+  --accent-2: #2a2a2c;
+  --accent-rgb: 245, 165, 36;
 }
 
-/* ---------- Dark Theme (leicht grün getönt) ---------- */
+/* ---------- Dark Theme (neutral charcoal, orange glow) ---------- */
 .ig-app[data-theme="dark"] {
-  --bg: #0a100e;
-  --surface: #121a17;
-  --surface-2: #1a2420;
-  --surface-glass: rgba(18, 28, 24, 0.80);
+  --bg: #0c0d12;
+  --surface: #16181f;
+  --surface-2: #1e212b;
+  --surface-glass: rgba(24, 26, 34, 0.80);
   --text: #f2f3f7;
-  --text-dim: #9aa5a0;
-  --border: rgba(232, 213, 168, 0.08);
+  --text-dim: #9aa0ad;
+  --border: rgba(255, 255, 255, 0.08);
   --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 8px 28px rgba(0,0,0,0.30);
   --shadow-soft: 0 2px 10px rgba(0,0,0,0.25);
-  /* Only top glow — bottom stays flat so dock zone never looks like a foreign strip */
   background-image:
-    radial-gradient(ellipse 80% 40% at 50% 0%, rgba(var(--accent-rgb), 0.12) 0%, transparent 100%);
+    radial-gradient(ellipse 80% 40% at 50% 0%, rgba(var(--accent-rgb), 0.10) 0%, transparent 100%);
 }
 .ig-app[data-mode="f"][data-theme="dark"] {
-  --bg: #0b1210;
-  --surface: #141c18;
-  --surface-2: #1c2822;
-  --surface-glass: rgba(20, 32, 26, 0.82);
-  --border: rgba(232, 213, 168, 0.10);
+  --bg: #0e0d12;
+  --surface: #18171f;
+  --surface-2: #211f2a;
+  --surface-glass: rgba(28, 26, 36, 0.82);
+  --border: rgba(255, 159, 26, 0.10);
 }
 
-/* ---------- Light Theme (warmes Creme/Grün) ---------- */
+/* ---------- Light Theme (warm cream like logo tile) ---------- */
 .ig-app[data-theme="light"] {
-  --bg: #f4f6f3;
+  --bg: #f3f0ea;
   --surface: #ffffff;
-  --surface-2: #e9efe9;
-  --surface-glass: rgba(255, 255, 255, 0.88);
-  --text: #142019;
-  --text-dim: #5c6b62;
-  --border: rgba(20, 40, 30, 0.08);
-  --shadow: 0 1px 2px rgba(20,40,30,0.05), 0 10px 30px rgba(20,40,30,0.08);
-  --shadow-soft: 0 2px 12px rgba(20,40,30,0.06);
+  --surface-2: #ebe6de;
+  --surface-glass: rgba(255, 255, 255, 0.90);
+  --text: #1a1a1c;
+  --text-dim: #6b6560;
+  --border: rgba(26, 26, 28, 0.08);
+  --shadow: 0 1px 2px rgba(26,26,28,0.05), 0 10px 30px rgba(26,26,28,0.07);
+  --shadow-soft: 0 2px 12px rgba(26,26,28,0.06);
   background-image:
     radial-gradient(ellipse 80% 40% at 50% 0%, rgba(var(--accent-rgb),0.08) 0%, transparent 100%);
 }
 .ig-app[data-mode="f"][data-theme="light"] {
-  --bg: #f6f8f5;
-  --surface-2: #e8f0ea;
-  --border: rgba(31, 107, 79, 0.10);
+  --bg: #f5f1eb;
+  --surface-2: #ede8e0;
+  --border: rgba(245, 165, 36, 0.12);
 }
 
 /* Legacy-Aliase (alte Variablennamen bleiben gueltig) */
@@ -274,18 +273,18 @@ html, body, #root {
 .ig-splash-glass,
 .ig-splash-oz {
   filter:
-    drop-shadow(0 1px 0 rgba(232, 213, 168, 0.12))
-    drop-shadow(0 12px 28px rgba(0, 0, 0, 0.45))
-    drop-shadow(0 0 28px rgba(31, 107, 79, 0.35));
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.2))
+    drop-shadow(0 12px 28px rgba(0, 0, 0, 0.35))
+    drop-shadow(0 0 28px rgba(245, 165, 36, 0.28));
   border-radius: 22%;
   line-height: 0;
-  background: #0f4a3c;
+  background: #f3f0ea;
 }
 .ig-logo-oz {
   box-shadow:
-    0 0 0 0.5px rgba(232, 213, 168, 0.12),
-    0 2px 10px rgba(0, 0, 0, 0.35);
-  background: #0f4a3c !important;
+    0 0 0 0.5px rgba(0, 0, 0, 0.06),
+    0 2px 10px rgba(0, 0, 0, 0.18);
+  background: #f3f0ea !important;
 }
 .ig-splash-word {
   font-family: var(--font-display);
@@ -308,7 +307,7 @@ html, body, #root {
 .ig-logo-glass .ig-logo-z,
 .ig-logo-on-dark .ig-logo-z,
 .ig-logo-on-light .ig-logo-z {
-  stroke: var(--accent, #1f6b4f) !important;
+  stroke: var(--accent, #f5a524) !important;
 }
 .ig-brand-mark {
   display: flex;
@@ -694,8 +693,8 @@ html, body, #root {
 .ig-onb-gender-sub { font-size: 10.5px; font-weight: 500; color: var(--text-dim); text-align: center; line-height: 1.4; }
 .ig-onb-gender.f.active { border-color: #8b5cf6; background: color-mix(in srgb, #8b5cf6 10%, var(--surface)); box-shadow: 0 0 0 4px rgba(139,92,246,0.14); }
 .ig-onb-gender.f.active .ig-onb-gender-icon { color: #8b5cf6; }
-.ig-onb-gender.m.active { border-color: #1f6b4f; background: color-mix(in srgb, #1f6b4f 10%, var(--surface)); box-shadow: 0 0 0 4px rgba(31,107,79,0.16); }
-.ig-onb-gender.m.active .ig-onb-gender-icon { color: #1f6b4f; }
+.ig-onb-gender.m.active { border-color: #f5a524; background: color-mix(in srgb, #f5a524 12%, var(--surface)); box-shadow: 0 0 0 4px rgba(245,165,36,0.18); }
+.ig-onb-gender.m.active .ig-onb-gender-icon { color: #f5a524; }
 .ig-onb-list { display: flex; flex-direction: column; gap: 10px; }
 .ig-onb-option { display: flex; align-items: center; gap: 14px; text-align: left; background: var(--surface); border: 2px solid var(--border); color: var(--text); border-radius: var(--radius-lg); padding: 15px 16px; font-family: inherit; cursor: pointer; transition: all 0.2s var(--ease-out); box-shadow: var(--shadow-soft); }
 .ig-onb-option:active { transform: scale(0.98); }
