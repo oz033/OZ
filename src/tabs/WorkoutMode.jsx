@@ -25,6 +25,7 @@ import {
   SkipForward,
   Play,
   Pause,
+  Search,
 } from "lucide-react";
 import { CountUp, RestRing, Confetti, showConfirm } from "../components/ui.jsx";
 import { EclipseMark } from "../components/brand.jsx";
@@ -234,15 +235,21 @@ function StretchFlow({ mode, items, soundOn, hapticsOn, onDone }) {
    Muskelgruppe, nach Equipment filterbar. Gerät besetzt/defekt → 2 Taps. */
 function ReplacePanel({ current, library, queueNames, onPick, onClose }) {
   const [equip, setEquip] = useState(null);
+  const [query, setQuery] = useState("");
   const EQUIPS = ["Maschine", "Kurzhantel", "Langhantel", "Kabelzug", "Körpergewicht"];
 
   const alternatives = useMemo(() => {
+    const q = query.trim().toLowerCase();
     const list = (library || []).filter(
       (e) =>
         e.muscle === current.muscle &&
         e.id !== current.id &&
         !queueNames.has(e.name) &&
-        (!equip || e.equipment === equip),
+        // "assisted" = Partner hilft — kein echter Geräte-Ersatz im Studio
+        e.equipmentRaw !== "assisted" &&
+        !/^assisted\b/i.test(e.name) &&
+        (!equip || e.equipment === equip) &&
+        (!q || e.name.toLowerCase().includes(q)),
     );
     // Gleiches Equipment zuerst — wahrscheinlichster 1-Tap-Ersatz
     return list
@@ -253,7 +260,7 @@ function ReplacePanel({ current, library, queueNames, onPick, onClose }) {
           a.name.localeCompare(b.name),
       )
       .slice(0, 40);
-  }, [library, current, equip, queueNames]);
+  }, [library, current, equip, queueNames, query]);
 
   return (
     <div className="ig-wo-replace-backdrop" onClick={onClose} role="presentation">
@@ -275,6 +282,17 @@ function ReplacePanel({ current, library, queueNames, onPick, onClose }) {
           <button className="ig-icon-btn ghost" onClick={onClose} aria-label="Schließen">
             <X size={20} />
           </button>
+        </div>
+        <div className="ig-wo-replace-search">
+          <Search size={15} className="ig-wo-replace-search-icon" aria-hidden="true" />
+          <input
+            className="ig-input"
+            type="search"
+            placeholder="Übung suchen …"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Alternative Übung suchen"
+          />
         </div>
         <div className="ig-wo-replace-chips">
           <button

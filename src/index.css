@@ -3056,6 +3056,21 @@ button.ig-ex-stat-btn:active { transform: scale(0.985); }
   gap: 3px;
 }
 .ig-wo-replace-title strong { font-size: 14.5px; line-height: 1.35; }
+.ig-wo-replace-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.ig-wo-replace-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+.ig-wo-replace-search .ig-input {
+  padding-left: 34px;
+  font-size: 14px;
+}
 .ig-wo-replace-chips {
   display: flex;
   gap: 6px;
