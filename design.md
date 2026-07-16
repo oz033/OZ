@@ -107,6 +107,19 @@ Lives at the end of `src/index.css` ("Interaction Consistency Layer"). Rules:
 - Timing tokens: `--dur-fast: 120ms`, `--dur-med: 200ms` — new transitions use
   these, not ad-hoc values.
 
+## System-Overlays (v2.2 — 2026-07-16)
+
+- **Toast** (`showToast`, z 120) — Fehler/Hinweise in-app; `window.alert` ist verboten.
+- **Confirm-Sheet** (`showConfirm`, z 130, Promise<boolean>) — ersetzt `window.confirm`;
+  destruktive Aktionen: roter Bestätigen-Button (`.ig-btn-danger`).
+- z-Ordnung: Dock 40 · Sheet 70/80 · Workout 100 · Toast 120 · Confirm 130.
+- **Sessions-Datenmodell:** `data.sessions[] = { date, seconds, sets, volume, prs }`,
+  geschrieben beim Workout-Abschluss. Dashboard zeigt daraus Dauer + ≈kcal
+  (MET 5,0 × kg × h — nur mit echtem Körpergewicht, sonst keine Zahl).
+- **PWA:** Service Worker aktiv (autoUpdate + skipWaiting), Übungs-GIFs
+  CacheFirst (offline im Gym). Manifest-Shortcuts: Workout/Pläne/Verlauf via
+  `?quick=start|plan|progress`.
+
 ## Copy voice
 
 - German, short, second person optional.

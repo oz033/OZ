@@ -34,5 +34,28 @@
       "type": "image/png",
       "purpose": "any"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Workout starten",
+      "short_name": "Workout",
+      "description": "Heutiges Workout direkt starten",
+      "url": "/?quick=start",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Pläne",
+      "short_name": "Pläne",
+      "description": "Trainingspläne öffnen",
+      "url": "/?quick=plan",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Verlauf",
+      "short_name": "Verlauf",
+      "description": "Fortschritt und Rekorde ansehen",
+      "url": "/?quick=progress",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
   ]
 }

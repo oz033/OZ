@@ -2,7 +2,147 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { REDUCED_MOTION } from "../lib/utils.js";
+import { AlertTriangle, Check } from "lucide-react";
+import { REDUCED_MOTION, buzz } from "../lib/utils.js";
+
+/* Leichter Toast-Bus: showToast() feuert ein CustomEvent, das der ToastHost in
+   der App-Shell rendert. Kein Prop-Drilling, kein Context — Fehlertexte dürfen
+   aus jedem Tab kommen. Ersetzt window.alert() (bricht Premium-Gefühl). */
+export function showToast(message, type = "error") {
+  window.dispatchEvent(
+    new CustomEvent("ozgym:toast", { detail: { message, type } }),
+  );
+}
+
+/* In-App-Bestätigung statt window.confirm(): Promise<boolean>.
+   Destruktive Aktionen bekommen einen roten Bestätigen-Button. */
+export function showConfirm({
+  title,
+  message,
+  confirmLabel = "Bestätigen",
+  cancelLabel = "Abbrechen",
+  destructive = false,
+}) {
+  return new Promise((resolve) => {
+    window.dispatchEvent(
+      new CustomEvent("ozgym:confirm", {
+        detail: { title, message, confirmLabel, cancelLabel, destructive, resolve },
+      }),
+    );
+  });
+}
+
+export function ConfirmHost({ hapticsOn = true }) {
+  const [req, setReq] = useState(null);
+  const hapticsRef = useRef(hapticsOn);
+  useEffect(() => {
+    hapticsRef.current = hapticsOn;
+  }, [hapticsOn]);
+  useEffect(() => {
+    const onConfirm = (e) => {
+      if (!e.detail?.resolve) return;
+      buzz(15, hapticsRef.current);
+      setReq(e.detail);
+    };
+    window.addEventListener("ozgym:confirm", onConfirm);
+    return () => window.removeEventListener("ozgym:confirm", onConfirm);
+  }, []);
+  useEffect(() => {
+    if (!req) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        req.resolve(false);
+        setReq(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [req]);
+  if (!req) return null;
+  const close = (result) => {
+    req.resolve(result);
+    setReq(null);
+  };
+  return (
+    <div
+      className="ig-confirm-backdrop"
+      onClick={() => close(false)}
+      role="presentation"
+    >
+      <div
+        className="ig-confirm"
+        role="alertdialog"
+        aria-modal="true"
+        aria-label={req.title || req.message}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {req.title && <h3 className="ig-confirm-title">{req.title}</h3>}
+        {req.message && <p className="ig-confirm-msg">{req.message}</p>}
+        <div className="ig-confirm-actions">
+          <button
+            type="button"
+            className="ig-btn-primary wide ghosted"
+            onClick={() => close(false)}
+            autoFocus
+          >
+            {req.cancelLabel}
+          </button>
+          <button
+            type="button"
+            className={
+              "ig-btn-primary wide" + (req.destructive ? " ig-btn-danger" : "")
+            }
+            onClick={() => close(true)}
+          >
+            {req.confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ToastHost({ hapticsOn = true }) {
+  const [toast, setToast] = useState(null);
+  const timer = useRef(null);
+  const hapticsRef = useRef(hapticsOn);
+  useEffect(() => {
+    hapticsRef.current = hapticsOn;
+  }, [hapticsOn]);
+  useEffect(() => {
+    const onToast = (e) => {
+      const { message, type = "error" } = e.detail || {};
+      if (!message) return;
+      clearTimeout(timer.current);
+      // key erzwingt Remount → Ein-Animation (inkl. Shake) spielt erneut
+      setToast({ message, type, key: Date.now() });
+      if (type === "error") buzz([30, 40, 30], hapticsRef.current);
+      timer.current = setTimeout(() => setToast(null), 3600);
+    };
+    window.addEventListener("ozgym:toast", onToast);
+    return () => {
+      window.removeEventListener("ozgym:toast", onToast);
+      clearTimeout(timer.current);
+    };
+  }, []);
+  if (!toast) return null;
+  return (
+    <div
+      key={toast.key}
+      className={"ig-toast " + toast.type}
+      role="alert"
+      onClick={() => {
+        clearTimeout(timer.current);
+        setToast(null);
+      }}
+    >
+      <span className="ig-toast-icon" aria-hidden="true">
+        {toast.type === "error" ? <AlertTriangle size={16} /> : <Check size={16} />}
+      </span>
+      <span className="ig-toast-msg">{toast.message}</span>
+    </div>
+  );
+}
 
 /* Skeleton statt leerem/weißem Frame beim ersten Laden eines lazy Tabs.
    Greift nur beim allerersten Besuch pro Chunk (React.lazy resolved danach

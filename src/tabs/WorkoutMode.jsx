@@ -22,7 +22,7 @@ import {
   TrendingUp,
   Info,
 } from "lucide-react";
-import { CountUp, RestRing, Confetti } from "../components/ui.jsx";
+import { CountUp, RestRing, Confetti, showConfirm } from "../components/ui.jsx";
 import { EclipseMark } from "../components/brand.jsx";
 import ExerciseDemo from "../components/ExerciseDemo.jsx";
 import {
@@ -242,6 +242,27 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
   }, [idx, phase, trackW, settleTrack]);
 
   const sessionRef = useRef({ sets: 0, volume: 0, prs: 0, records: [], zones: new Set() });
+
+  // Einheit beim Abschluss einmalig persistieren (Dauer, Sätze, Volumen, PRs)
+  // — Grundlage für Trainingszeit + ≈kcal auf dem Dashboard und im Verlauf.
+  const sessionSavedRef = useRef(false);
+  useEffect(() => {
+    if (phase !== "done" || sessionSavedRef.current) return;
+    sessionSavedRef.current = true;
+    const s = sessionRef.current;
+    if (s.sets === 0) return; // nichts geloggt — keine leere Einheit speichern
+    const entry = {
+      date: today,
+      seconds: Math.floor((Date.now() - startRef.current) / 1000),
+      sets: s.sets,
+      volume: Math.round(s.volume),
+      prs: s.prs,
+    };
+    update((prev) => ({
+      ...prev,
+      sessions: [...(prev.sessions || []), entry],
+    }));
+  }, [phase, today, update]);
 
   const item = queue[idx] || null;
   const exercise = item?.name || "";
@@ -1443,15 +1464,15 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
             type="button"
             className="ig-wo-exit"
             data-no-sheet-drag
-            onClick={() => {
+            onClick={async () => {
               const open = queue.some((it) => !itemDone(it));
-              if (
-                open &&
-                !window.confirm(
-                  "Workout beenden? Deine geloggten Sätze bleiben gespeichert.",
-                )
-              ) {
-                return;
+              if (open) {
+                const ok = await showConfirm({
+                  title: "Workout beenden?",
+                  message: "Deine geloggten Sätze bleiben gespeichert.",
+                  confirmLabel: "Beenden",
+                });
+                if (!ok) return;
               }
               onExit();
             }}

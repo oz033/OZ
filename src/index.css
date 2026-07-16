@@ -2728,3 +2728,140 @@ button.ig-active-plan-btn:active {
 .ig-icon-btn { width: var(--touch); height: var(--touch); }
 .ig-icon-btn.sm { width: 32px; height: 32px; }
 .ig-icon-btn.ghost { width: 28px; height: 28px; }
+
+/* ---- Toast: In-App-Fehler/Erfolg statt window.alert ---- */
+@keyframes ig-toast-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ig-toast-shake {
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+.ig-toast {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  margin: 0 auto;
+  width: fit-content;
+  max-width: min(406px, calc(100% - 24px));
+  bottom: calc(var(--tabbar-stack) + 10px);
+  z-index: 120; /* über .ig-wo (100) — Fehler müssen auch im Workout sichtbar sein */
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  animation: ig-toast-in 0.25s var(--ease-out);
+}
+.ig-toast.error {
+  border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+  animation: ig-toast-in 0.25s var(--ease-out),
+    ig-toast-shake 0.4s var(--ease-out) 0.25s;
+}
+.ig-toast.error .ig-toast-icon { color: var(--danger); }
+.ig-toast.success .ig-toast-icon { color: var(--success); }
+.ig-toast-icon { display: flex; flex-shrink: 0; }
+.ig-toast-msg { min-width: 0; }
+
+/* ---- Icon-Swap: Theme-/Sound-Toggle wechselt weich statt hart ---- */
+@keyframes ig-icon-swap {
+  from { opacity: 0; transform: rotate(-70deg) scale(0.7); }
+  to { opacity: 1; transform: rotate(0deg) scale(1); }
+}
+.ig-icon-swap {
+  display: inline-flex;
+  line-height: 0;
+  animation: ig-icon-swap 0.3s var(--ease-out);
+}
+
+/* ---- Confirm-Sheet: In-App-Bestätigung statt window.confirm ---- */
+@keyframes ig-confirm-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ig-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.ig-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 130; /* über .ig-wo (100) und Toast (120) */
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: ig-backdrop-in 0.2s var(--ease-out);
+}
+.ig-confirm {
+  width: 100%;
+  max-width: 430px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: 20px 18px calc(16px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--shadow);
+  animation: ig-confirm-up 0.28s var(--ease-out);
+}
+.ig-confirm-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+.ig-confirm-msg {
+  font-size: 13.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin: 0 0 8px;
+}
+.ig-confirm-actions { display: flex; gap: 10px; }
+.ig-confirm-actions .ig-btn-primary { flex: 1; }
+.ig-btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* ---- Gewichts-Chart (eigene SVG-Linie statt recharts) ---- */
+.ig-wchart { width: 100%; }
+.ig-wchart-tick {
+  fill: var(--text-dim);
+  font-size: 11px;
+  font-family: var(--font-body);
+}
+.ig-wchart-last {
+  fill: var(--success);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ---- Statistik-Balken bauen sich beim Einblenden auf ---- */
+@keyframes ig-fill-up {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+.ig-muscle-fill {
+  transform-origin: left;
+  animation: ig-fill-in 0.7s var(--ease-out);
+}
+.ig-freq-fill {
+  transform-origin: bottom;
+  animation: ig-fill-up 0.6s var(--ease-out);
+}

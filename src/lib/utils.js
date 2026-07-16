@@ -72,6 +72,23 @@ export function buzz(pattern, enabled = true) {
   if (enabled && navigator.vibrate) navigator.vibrate(pattern);
 }
 
+/** Aktuelles Körpergewicht: letzter Log-Eintrag, sonst Profil-Feld. */
+export function currentWeightKg(profile) {
+  const log = profile?.weightLog;
+  const last = Array.isArray(log) && log.length ? log[log.length - 1].kg : null;
+  const kg = Number(last ?? profile?.weightKg);
+  return Number.isFinite(kg) && kg > 0 ? kg : null;
+}
+
+/** ≈ Kalorien einer Krafteinheit: MET 5,0 (Krafttraining) × kg × Stunden.
+    Ehrliche Schätzung, kein Tracking — ohne Körpergewicht keine Zahl. */
+export function estimateKcal(seconds, weightKg) {
+  const kg = Number(weightKg);
+  const sec = Number(seconds);
+  if (!kg || kg <= 0 || !Number.isFinite(sec) || sec <= 0) return null;
+  return Math.round(5.0 * kg * (sec / 3600));
+}
+
 /* ---------------- Statistiken (alles aus Logs abgeleitet) ---------------- */
 
 export function calcStats(logs, weeklyGoal = 3) {

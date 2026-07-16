@@ -13,7 +13,7 @@ import {
 } from "../lib/constants.js";
 import { uid, planStats, relativeDay, todayISO, round1 } from "../lib/utils.js";
 import { generatePlans } from "../lib/planGenerator.js";
-import { EmptyState } from "../components/ui.jsx";
+import { EmptyState, showToast, showConfirm } from "../components/ui.jsx";
 
 export default function PlansTab({ data, update, goTo, autoOpenPlanId, onAutoOpenHandled }) {
   const [editingId, setEditingId] = useState(null);
@@ -62,13 +62,14 @@ export default function PlansTab({ data, update, goTo, autoOpenPlanId, onAutoOpe
     });
   };
 
-  const regenerate = () => {
-    if (
-      !window.confirm(
-        "Neuen Smart-Plan aus deinem Profil erstellen? Automatisch erstellte Pläne werden ersetzt, eigene bleiben erhalten.",
-      )
-    )
-      return;
+  const regenerate = async () => {
+    const ok = await showConfirm({
+      title: "Smart-Plan neu erstellen?",
+      message:
+        "Automatisch erstellte Pläne werden ersetzt, eigene bleiben erhalten.",
+      confirmLabel: "Neu erstellen",
+    });
+    if (!ok) return;
     update((prev) => {
       const kept = (prev.plans || []).filter((p) => !p.generated);
       const generated = generatePlans(prev.profile, prev.library || []);
@@ -92,8 +93,14 @@ export default function PlansTab({ data, update, goTo, autoOpenPlanId, onAutoOpe
     update((prev) => ({ ...prev, plans: [...prev.plans, copy] }));
   };
 
-  const deletePlan = (p) => {
-    if (!window.confirm(`Plan "${p.name}" wirklich löschen?`)) return;
+  const deletePlan = async (p) => {
+    const ok = await showConfirm({
+      title: `"${p.name}" löschen?`,
+      message: "Der Plan und seine Tageszuordnung werden entfernt. Deine geloggten Trainings bleiben erhalten.",
+      confirmLabel: "Löschen",
+      destructive: true,
+    });
+    if (!ok) return;
     update((prev) => {
       const plans = prev.plans.filter((x) => x.id !== p.id);
       return {
@@ -145,7 +152,7 @@ export default function PlansTab({ data, update, goTo, autoOpenPlanId, onAutoOpe
               }
               if (goTo) goTo("profile");
               else
-                window.alert(
+                showToast(
                   "Lege im Profil zuerst Fokus und Level fest — dann erzeugt Smart einen passenden Plan.",
                 );
             }}

@@ -4,16 +4,8 @@
 
 import React, { useState, useMemo } from "react";
 import { CalendarDays, Scale, Trophy, Award, TrendingUp } from "lucide-react";
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
 import { CountUp, Sparkline, EmptyState } from "../components/ui.jsx";
+import WeightChart from "../components/WeightChart.jsx";
 import StreakCalendar from "../components/StreakCalendar.jsx";
 import {
   calcStats,
@@ -163,37 +155,7 @@ export default function ProgressTab({ data, onStart }) {
             Körpergewicht
           </div>
           <div className="ig-chart-wrap">
-            <ResponsiveContainer width="100%" height={160}>
-              <LineChart data={weightChart} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
-                <CartesianGrid stroke="var(--border)" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fill: "var(--text-dim)", fontSize: 11 }}
-                  axisLine={{ stroke: "var(--border)" }}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: "var(--text-dim)", fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={40}
-                  domain={["dataMin - 2", "dataMax + 2"]}
-                />
-                <Tooltip
-                  contentStyle={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }}
-                  labelStyle={{ color: "var(--text-dim)" }}
-                  formatter={(v) => [v + " kg", "Gewicht"]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="kg"
-                  stroke="var(--success)"
-                  strokeWidth={2.5}
-                  dot={{ r: 3, fill: "var(--success)" }}
-                  activeDot={{ r: 5 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <WeightChart data={weightChart} height={160} />
           </div>
         </div>
       )}

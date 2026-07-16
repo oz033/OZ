@@ -136,18 +136,9 @@
                 );
                 // Do NOT listen to visualViewport resize/scroll for shell height.
 
-                try {
-                    if ("serviceWorker" in navigator) {
-                        navigator.serviceWorker.getRegistrations().then(function (regs) {
-                            regs.forEach(function (r) { r.unregister(); });
-                        });
-                    }
-                    if (typeof caches !== "undefined") {
-                        caches.keys().then(function (keys) {
-                            keys.forEach(function (k) { caches.delete(k); });
-                        });
-                    }
-                } catch (e) { /* ignore */ }
+                // SW-Kill-Switch entfernt: der neue Service Worker (vite-plugin-pwa,
+                // autoUpdate + skipWaiting) ersetzt alte Versionen selbst und cached
+                // Übungs-GIFs für Offline-Betrieb im Gym.
 
                 try {
                     var raw =

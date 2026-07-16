@@ -26,6 +26,8 @@ import {
   relativeDay,
   fmtDate,
   round1,
+  currentWeightKg,
+  estimateKcal,
 } from "../lib/utils.js";
 import { weeklyAdherence, catchUpDay } from "../lib/planGenerator.js";
 
@@ -105,7 +107,18 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
   if (trainedToday) {
     eyebrow = `${weekday} · Erledigt`;
     title = "Stark gemacht.";
-    sub = "Training für heute im Kasten.";
+    // Echte Zahlen der heutigen Einheit(en) statt Floskel — Dauer aus der
+    // persistierten Session, Kalorien nur als ehrliche ≈-Schätzung mit
+    // vorhandenem Körpergewicht.
+    const todaySessions = (data.sessions || []).filter((x) => x.date === today);
+    const secondsToday = todaySessions.reduce((a, x) => a + (x.seconds || 0), 0);
+    const kcal = estimateKcal(secondsToday, currentWeightKg(data.profile));
+    sub =
+      secondsToday > 0
+        ? `${Math.max(1, Math.round(secondsToday / 60))} Min trainiert` +
+          (kcal ? ` · ≈ ${kcal} kcal` : "") +
+          ` · ${Math.round(stats.dayVolumes[today] || 0)} kg bewegt`
+        : "Training für heute im Kasten.";
   } else if (restDay) {
     eyebrow = `${weekday} · Ruhetag`;
     title = "Regeneration.";

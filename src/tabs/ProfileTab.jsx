@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import ThemeStudio from "../components/ThemeStudio.jsx";
 import { OzGymMark } from "../components/brand.jsx";
-import { ToggleRow } from "../components/ui.jsx";
+import { ToggleRow, showToast, showConfirm } from "../components/ui.jsx";
 import { todayISO, round1, playSound, buzz, calcStats } from "../lib/utils.js";
 import { hydrate } from "../lib/migrate.js";
 import { BADGE_DEFS, GOALS, LEVELS } from "../lib/constants.js";
@@ -109,7 +109,7 @@ export default function ProfileTab({ data, update, goTo }) {
 
   const importData = (file) => {
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const parsed = JSON.parse(reader.result);
         if (!parsed || typeof parsed !== "object") throw new Error("invalid");
@@ -117,17 +117,19 @@ export default function ProfileTab({ data, update, goTo }) {
         if (!Array.isArray(parsed.logs) && !parsed.profile && !parsed.plans) {
           throw new Error("invalid");
         }
-        if (
-          window.confirm(
-            "Backup einspielen? Das ersetzt deine aktuellen Daten auf diesem Gerät.",
-          )
-        ) {
+        const ok = await showConfirm({
+          title: "Backup einspielen?",
+          message: "Das ersetzt deine aktuellen Daten auf diesem Gerät.",
+          confirmLabel: "Einspielen",
+          destructive: true,
+        });
+        if (ok) {
           update(() => hydrate(parsed));
           playSound("pr", settings.sound !== false);
           buzz(40, settings.haptics !== false);
         }
       } catch {
-        window.alert("Diese Datei ist kein gültiges OZGYM-Backup.");
+        showToast("Diese Datei ist kein gültiges OZGYM-Backup.");
       }
     };
     reader.readAsText(file);

@@ -29,7 +29,7 @@ import {
 } from "./lib/utils.js";
 import { hydrate, freshState, prepareForStorage } from "./lib/migrate.js";
 import { generatePlans } from "./lib/planGenerator.js";
-import { TabBtn, TabSkeleton } from "./components/ui.jsx";
+import { TabBtn, TabSkeleton, ToastHost, ConfirmHost } from "./components/ui.jsx";
 // Home ist der erste Screen nach dem Laden — sofort verfügbar statt nachgeladen.
 import DashboardTab from "./tabs/DashboardTab.jsx";
 // Alles andere (inkl. recharts in ProgressTab) erst bei Bedarf laden, damit der
@@ -257,6 +257,24 @@ export default function App() {
     };
   }, [data]);
 
+  // PWA-Shortcut (Homescreen-Long-Press): ?quick=start|plan|progress.
+  // Hook MUSS vor dem Splash-Early-Return stehen. startWorkout ist erst nach
+  // dem Return definiert — deshalb über Ref aufrufen (im selben Render-Pass
+  // bereits zugewiesen, Effects laufen nach dem Body).
+  const quickRef = useRef(
+    new URLSearchParams(window.location.search).get("quick"),
+  );
+  const startWorkoutRef = useRef(null);
+  useEffect(() => {
+    const q = quickRef.current;
+    if (!loaded || !q) return;
+    quickRef.current = null;
+    window.history.replaceState(null, "", window.location.pathname);
+    if (q === "plan") setTab("plan");
+    else if (q === "progress") setTab("progress");
+    else if (q === "start") startWorkoutRef.current?.();
+  }, [loaded]);
+
   if (!loaded) {
     return (
       <div className="ig-app" {...themeAttrs} style={accentStyle}>
@@ -293,6 +311,7 @@ export default function App() {
     setTab("workout");
     setWorkoutOpen(true);
   };
+  startWorkoutRef.current = startWorkout;
 
   // Leeren Plan anlegen und direkt in die Bearbeitung springen — ein Tap statt zwei.
   const createPlanAndEdit = () => {
@@ -350,7 +369,10 @@ export default function App() {
               }
               aria-label={theme === "dark" ? "Light Mode" : "Dark Mode"}
             >
-              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+              {/* key erzwingt Remount → Swap-Animation beim Wechsel */}
+              <span className="ig-icon-swap" key={theme}>
+                {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+              </span>
             </button>
             <button
               className="ig-mute-btn"
@@ -366,7 +388,9 @@ export default function App() {
               }
               aria-label={soundOn ? "Sound stummschalten" : "Sound einschalten"}
             >
-              {soundOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
+              <span className="ig-icon-swap" key={soundOn ? "on" : "off"}>
+                {soundOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
+              </span>
             </button>
           </div>
         </header>
@@ -446,6 +470,9 @@ export default function App() {
             />
           </Suspense>
         )}
+
+        <ToastHost hapticsOn={data.settings?.haptics !== false} />
+        <ConfirmHost hapticsOn={data.settings?.haptics !== false} />
 
         {/* Dock shell paints app bg into home-indicator zone; pill floats above */}
         {!workoutOpen && (
