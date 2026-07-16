@@ -13,6 +13,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { OzGymMark, SplashScreen } from "./components/brand.jsx";
 
 import { STORAGE_KEY, STORAGE_KEY_LEGACY, blankPlan } from "./lib/constants.js";
@@ -310,6 +311,7 @@ export default function App() {
 
   return (
     <div className="ig-app" {...themeAttrs} style={accentStyle}>
+      <SpeedInsights />
       <div className="ig-phone">
         <header className="ig-header">
           <div className="ig-brand">
