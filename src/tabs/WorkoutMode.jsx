@@ -779,15 +779,6 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
     );
   }, [queue, idx, item, itemDone]);
 
-  const totalTarget = queue.reduce((n, it) => n + it.sets, 0);
-  const totalSetsDone = queue.reduce(
-    (n, it) => n + Math.min(setsFor(it.name), it.sets),
-    0,
-  );
-  const totalPct = totalTarget ? totalSetsDone / totalTarget : 0;
-  // Leiste folgt der aktuellen Karte (Swipe), nicht nur den fertigen Sätzen
-  const exercisePct =
-    queue.length > 0 ? Math.min(1, (idx + 1) / queue.length) : 0;
   const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
   const ss = String(elapsed % 60).padStart(2, "0");
 
@@ -938,7 +929,7 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
             <span className="ig-wo-head-vol-unit">kg</span>
           </div>
         </div>
-        {/* Segment-Leiste: folgt Swipe; tippen springt zur Übung */}
+        {/* Eine Segment-Leiste: folgt Swipe; tippen springt zur Übung */}
         <div className="ig-wo-segbar" role="tablist" aria-label="Übungen">
           {queue.map((it, i) => {
             const done = itemDone(it);
@@ -963,12 +954,6 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
             );
           })}
         </div>
-        <div className="ig-wo-head-track" aria-hidden="true">
-          <div
-            className="ig-wo-head-fill"
-            style={{ width: `${exercisePct * 100}%` }}
-          />
-        </div>
       </header>
 
       {showSwipeHint && (
@@ -976,24 +961,6 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
           ← wischen: nächste Übung
         </div>
       )}
-
-      <div className="ig-wo-nextline">
-        {(() => {
-          const open = queue.filter((it) => !itemDone(it)).length;
-          const next =
-            queue.find((it, i) => i > idx && !itemDone(it)) ||
-            queue.find((it, i) => i !== idx && !itemDone(it));
-          if (open <= 1 && item && !itemDone(item))
-            return "Letzte Übung — dann hast du's geschafft!";
-          if (!next) return "Gleich geschafft!";
-          return (
-            <>
-              Danach: <strong>{next.name}</strong>
-              {open > 2 && ` · noch ${open - 1} weitere`}
-            </>
-          );
-        })()}
-      </div>
 
       <div ref={trackWrapRef} className="ig-wo-track-wrap">
       <div
