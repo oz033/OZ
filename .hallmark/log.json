@@ -5,6 +5,14 @@
     "theme": "modern-minimal / mono-premium dark",
     "enrichment": "none",
     "scope": "app",
+    "brief": "OZGYM v2.4: Warm-up + Cool-down (StretchFlow, zonenbasiert), Übung ersetzen im Workout (Muskelgruppen-Alternativen, Equipment-Filter)"
+  },
+  {
+    "date": "2026-07-16",
+    "macrostructure": "Workbench-lite (app shell)",
+    "theme": "modern-minimal / mono-premium dark",
+    "enrichment": "none",
+    "scope": "app",
     "brief": "OZGYM v2.3: SwipeRow (Plan-Liste+Editor), Long-Press-ActionSheet, Verlauf-Karten klickbar, Update-Toast (SW prompt), Backup-Erinnerung, Trainingszeit-Karte"
   },
   {
