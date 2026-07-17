@@ -70,6 +70,56 @@ export function allergenLabels(ids) {
     .filter(Boolean);
 }
 
+/** http→https, Protocol-relative → https (iOS Safari blockiert mixed content) */
+export function fixImageUrl(url) {
+  if (!url || typeof url !== "string") return null;
+  let s = url.trim();
+  if (!s) return null;
+  if (s.startsWith("//")) s = "https:" + s;
+  if (s.startsWith("http://")) s = "https://" + s.slice(7);
+  if (!/^https:\/\//i.test(s)) return null;
+  return s;
+}
+
+/**
+ * Beste verfügbare Produkt-Front aus OFF-Feldern.
+ * Viele AT-Produkte haben nur selected_images, nicht image_front_*.
+ */
+export function pickProductImage(p) {
+  if (!p || typeof p !== "object") return null;
+  const fromSelected = (node) => {
+    if (!node || typeof node !== "object") return [];
+    // Prefer DE → EN → any
+    const order = ["de", "en", "fr", "it", "es"];
+    const out = [];
+    for (const lang of order) {
+      if (node[lang]) out.push(node[lang]);
+    }
+    for (const v of Object.values(node)) {
+      if (typeof v === "string") out.push(v);
+    }
+    return out;
+  };
+
+  const candidates = [
+    p.image_front_url,
+    p.image_url,
+    p.image_front_small_url,
+    p.image_small_url,
+    p.image_front_thumb_url,
+    p.image_thumb_url,
+    ...fromSelected(p.selected_images?.front?.display),
+    ...fromSelected(p.selected_images?.front?.small),
+    ...fromSelected(p.selected_images?.front?.thumb),
+  ];
+
+  for (const c of candidates) {
+    const fixed = fixImageUrl(c);
+    if (fixed) return fixed;
+  }
+  return null;
+}
+
 /**
  * @param {string} barcode
  * @returns {Promise<object|null>}
@@ -85,8 +135,13 @@ export async function fetchProductByBarcode(barcode) {
     "product_name_de",
     "product_name_en",
     "brands",
+    "image_front_url",
     "image_front_small_url",
+    "image_front_thumb_url",
     "image_url",
+    "image_small_url",
+    "image_thumb_url",
+    "selected_images",
     "quantity",
     "serving_size",
     "nutriments",
@@ -161,13 +216,35 @@ export async function fetchProductByBarcode(barcode) {
     p.environmental_score_grade || p.ecoscore_grade || null;
   const nutriRaw = p.nutriscore_grade || p.nutrition_grades || null;
 
+  // Wenn v2-fields kaum Bild liefert: v0 nochmal für selected_images
+  let image = pickProductImage(p);
+  if (!image) {
+    try {
+      const res = await fetch(
+        `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(code)}.json`,
+        {
+          headers: { Accept: "application/json" },
+          signal: AbortSignal.timeout
+            ? AbortSignal.timeout(8000)
+            : undefined,
+        },
+      );
+      if (res.ok) {
+        const full = await res.json();
+        if (full?.product) image = pickProductImage(full.product);
+      }
+    } catch {
+      /* optional */
+    }
+  }
+
   return {
     barcode: code,
     name: String(name).trim(),
     brand: String(p.brands || "")
       .split(",")[0]
       .trim(),
-    image: p.image_front_small_url || p.image_url || null,
+    image,
     quantity: String(p.quantity || "").trim(),
     servingSize: String(p.serving_size || "").trim(),
     per100: {
@@ -197,7 +274,7 @@ export function toCacheProduct(product) {
     barcode: product.barcode || "",
     name: product.name || "",
     brand: product.brand || "",
-    image: product.image || null,
+    image: fixImageUrl(product.image) || product.image || null,
     quantity: product.quantity || "",
     servingSize: product.servingSize || "",
     per100: { ...(product.per100 || {}) },

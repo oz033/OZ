@@ -598,17 +598,24 @@ export default function FoodTab({
             </div>
           )}
           <div className="ig-food-product-head">
-            {product.image ? (
+            {product.image && !product._imgBroken ? (
               <img
                 src={product.image}
-                alt=""
+                alt={product.name || "Produkt"}
                 className="ig-food-thumb"
-                width={56}
-                height={56}
+                width={72}
+                height={72}
+                loading="eager"
+                decoding="async"
+                /* Safari blockiert OFF-Bilder manchmal mit Referrer */
+                referrerPolicy="no-referrer"
+                onError={() =>
+                  setProduct((p) => (p ? { ...p, _imgBroken: true } : p))
+                }
               />
             ) : (
               <span className="ig-food-thumb ig-food-thumb-ph" aria-hidden="true">
-                <Apple size={22} />
+                <Apple size={26} />
               </span>
             )}
             <div className="ig-food-product-meta">
@@ -636,6 +643,11 @@ export default function FoodTab({
               <span className="mono dim" style={{ fontSize: 11 }}>
                 {product.barcode || ""}
               </span>
+              {!product.image || product._imgBroken ? (
+                <span className="dim" style={{ fontSize: 11 }}>
+                  Kein Produktfoto in der Datenbank
+                </span>
+              ) : null}
               {(product.allergens || []).length > 0 ? (
                 <span className="ig-food-allergen-line dim">
                   Allergene: {allergenLabels(product.allergens).join(", ")}
@@ -998,6 +1010,7 @@ export default function FoodTab({
                       className="ig-food-thumb sm"
                       width={40}
                       height={40}
+                      referrerPolicy="no-referrer"
                     />
                   ) : (
                     <span
@@ -1078,7 +1091,13 @@ function QuickRow({ label, icon, items, onPick }) {
             onClick={() => onPick(f)}
           >
             {f.image ? (
-              <img src={f.image} alt="" width={28} height={28} />
+              <img
+                src={f.image}
+                alt=""
+                width={28}
+                height={28}
+                referrerPolicy="no-referrer"
+              />
             ) : (
               <Apple size={14} aria-hidden="true" />
             )}

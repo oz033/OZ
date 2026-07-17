@@ -6183,11 +6183,11 @@ button.ig-home-mini:active {
   line-height: 1.25;
 }
 .ig-food-thumb {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  object-fit: cover;
-  background: var(--surface-2);
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  object-fit: contain;
+  background: #fff;
   border: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -6197,6 +6197,7 @@ button.ig-home-mini:active {
   align-items: center;
   justify-content: center;
   color: var(--text-dim);
+  background: var(--surface-2);
 }
 .ig-food-gram-presets,
 .ig-food-meals {
@@ -7117,10 +7118,12 @@ button.ig-home-mini:active {
   gap: 10px;
 }
 .ig-food-thumb {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  object-fit: contain;
+  background: #fff;
 }
 .ig-food-product-name {
   font-size: 15px;
