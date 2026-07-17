@@ -20,24 +20,27 @@ export default function Onboarding({ onComplete }) {
 
   const nameOk = displayName.trim().length >= 1;
   const genderOk = gender === "m" || gender === "f";
-  const weightNum = Number(weightKg);
-  const weightOk = Number.isFinite(weightNum) && weightNum >= 30 && weightNum <= 300;
+  const weightNum = Number(String(weightKg).replace(",", "."));
+  // Weight optional — empty OK; if filled, must be valid range
+  const weightOk =
+    weightKg === "" ||
+    (Number.isFinite(weightNum) && weightNum >= 30 && weightNum <= 300);
   const heightNum = Number(heightCm);
   const heightOk =
     heightCm === "" ||
     (Number.isFinite(heightNum) && heightNum >= 100 && heightNum <= 250);
   const canNext = useMemo(() => {
     if (id === "welcome") return true;
-    if (id === "you") return nameOk && genderOk;
-    if (id === "body") return weightOk && heightOk;
+    if (id === "you") return nameOk && genderOk; // only name (with gender) required
+    if (id === "body") return weightOk && heightOk; // both optional, just valid if set
     return false;
   }, [id, nameOk, genderOk, weightOk, heightOk]);
 
   const finish = () => {
-    const w = Number(weightKg);
+    const w = Number(String(weightKg).replace(",", "."));
     let weightLog = [];
-    if (w > 0) {
-      weightLog = [{ date: todayISO(), kg: w }];
+    if (weightKg !== "" && Number.isFinite(w) && w >= 30 && w <= 300) {
+      weightLog = [{ date: todayISO(), kg: Math.round(w * 10) / 10 }];
     }
     onComplete({
       profile: {
@@ -149,11 +152,11 @@ export default function Onboarding({ onComplete }) {
             <p className="ig-onb-kicker mono">Schritt 2 · Körper</p>
             <h1 className="ig-onb-title">Größe & Gewicht</h1>
             <p className="ig-onb-sub">
-              Gewicht wird für kcal-Schätzung und den Verlauf gebraucht. Größe optional
-              (BMI). Später im Profil änderbar.
+              Alles optional — kannst du überspringen. Später im Profil oder unter
+              Verlauf nachtragen.
             </p>
             <label className="ig-num-field ig-onb-field">
-              <span>Gewicht (kg) *</span>
+              <span>Gewicht (kg, optional)</span>
               <input
                 className="ig-input mono"
                 type="number"
@@ -163,7 +166,6 @@ export default function Onboarding({ onComplete }) {
                 max={300}
                 placeholder="z. B. 68"
                 autoFocus
-                required
                 value={weightKg}
                 onChange={(e) => setWeightKg(e.target.value)}
               />
@@ -183,9 +185,17 @@ export default function Onboarding({ onComplete }) {
             </label>
             {!weightOk && weightKg !== "" && (
               <p className="ig-onb-hint" style={{ color: "var(--danger)" }}>
-                Bitte ein Gewicht zwischen 30 und 300 kg eingeben.
+                Wenn du etwas einträgst: 30–300 kg.
               </p>
             )}
+            <button
+              type="button"
+              className="ig-btn-primary wide ghosted"
+              style={{ marginTop: 14 }}
+              onClick={finish}
+            >
+              Überspringen
+            </button>
           </div>
         )}
       </div>
