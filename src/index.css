@@ -25,6 +25,15 @@ html, body, #root {
   background: var(--boot-bg, #0a0c0b);
 }
 
+/* Capacitor native shell */
+body.ig-native-app {
+  /* WebView: overscroll/bounce etwas bändigen */
+  overscroll-behavior: none;
+}
+html[data-native="yes"] .ig-app {
+  /* safe areas already via env() — native status bar overlay */
+}
+
 :root {
   /* Modal motion tokens (ui-skills · transitions-dev) — dialogFocus.js liest close-dur */
   --modal-open-dur: 0.32s;

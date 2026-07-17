@@ -27,6 +27,7 @@ import { isIos } from "../lib/iosShell.js";
 import {
   canUseNativeBarcode,
   scanBarcodeNative,
+  isScanCancelled,
 } from "../lib/nativePlatform.js";
 import {
   fetchProductByBarcode,
@@ -304,15 +305,20 @@ export default function FoodTab({
             await lookup(code);
             return;
           }
+          // Abbruch durch User
           setLoading(false);
           return;
         } catch (e) {
           console.warn("[food] native scan", e);
           setLoading(false);
-          showToast(
-            e?.message || "Nativer Scan fehlgeschlagen — Web-Scanner…",
-            "info",
-          );
+          if (!isScanCancelled(e)) {
+            showToast(
+              e?.message || "Nativer Scan fehlgeschlagen — Web-Scanner…",
+              "info",
+            );
+          } else {
+            return;
+          }
         }
       }
     } catch {

@@ -1,95 +1,99 @@
-# OZGYM iOS App (Capacitor)
+# OZGYM iOS App (Capacitor + ML Kit)
 
-Die Web-App läuft weiter auf Vercel. Zusätzlich gibt es eine **native iPhone-Hülle** mit **ML-Kit-Barcode-Scan** (sofortiges Erkennen wie bei Store-Apps).
+Native iPhone-App mit **sofortigem Barcode-Scan** (Google ML Kit).  
+Web/PWA auf Vercel bleibt unverändert (Fallback mit Foto/Manuell).
 
-## Voraussetzungen (Mac)
+| Umgebung | Scan |
+|----------|------|
+| **OZGYM.app** (dieses Projekt) | Nativ, fullscreen, EAN/UPC |
+| Safari / Home-Screen | Web (Foto-first) |
 
-1. **macOS** + **Xcode** (App Store)  
-2. **CocoaPods**: `sudo gem install cocoapods`  
-3. Optional: Apple Developer Account (TestFlight / App Store)  
-4. Node.js + npm (wie fürs Web)
+## Voraussetzungen (nur Mac)
 
-> Unter Windows kannst du den Code pflegen und `ios/` committen, **bauen** geht nur auf dem Mac.
+- macOS + **Xcode** (aktuell)
+- **CocoaPods**: `sudo gem install cocoapods`
+- Node.js 20+
+- iPhone per USB, **Entwicklermodus** an
+- Optional: Apple Developer (TestFlight/Store)
 
-## Einmalig einrichten (Mac)
-
-ML-Kit braucht **CocoaPods** (nicht nur SPM).
+## Einmalig / nach jedem `git pull`
 
 ```bash
 cd vibing
+chmod +x scripts/ios-setup.sh
+./scripts/ios-setup.sh
+```
+
+Oder manuell:
+
+```bash
 npm install
-npm run build
-npx cap sync ios
-
-# CapApp-SPM nur für reines SPM — bei Barcode-Plugin:
-# Xcode-Projekt mit CocoaPods:
-cd ios/App
-pod install
-open App.xcworkspace   # WICHTIG: .xcworkspace, nicht .xcodeproj
+npm run ios:sync
+cd ios/App && pod install && cd ../..
+open ios/App/App.xcworkspace   # NICHT .xcodeproj
 ```
 
-Falls `pod install` meckert, weil das Projekt noch SPM-only ist:
+### In Xcode
 
-1. Xcode öffnen (`npx cap open ios`)  
-2. Oder Capawesome-Anleitung: Deployment Target **iOS 15.5+**  
-3. `pod install` erneut  
+1. Projekt **App** → **Signing & Capabilities** → Team = deine Apple-ID  
+2. Bundle ID falls nötig: `app.ozgym.tracker`  
+3. Zielgerät: dein iPhone  
+4. ▶ **Run**  
+5. Beim ersten Scan: **Kamera erlauben**
 
-In Xcode:
-
-1. **Signing & Capabilities** → Team (Apple-ID)  
-2. iPhone per USB, Entwicklermodus an  
-3. ▶ Run  
-
-Kamera-Text: `Info.plist` → `NSCameraUsageDescription`.
-
-## Täglicher Workflow
-
-Nach Web-Änderungen:
+## Nach Web-Code-Änderungen
 
 ```bash
-npm run ios:sync    # build + cap sync
-npx cap open ios    # Xcode öffnen, Run
+npm run ios:sync
+# Xcode: Run erneut (oder Product → Run)
 ```
 
-Oder:
+## Projekt-Fakten
 
+| Key | Wert |
+|-----|------|
+| App-Name | OZGYM |
+| Bundle ID | `app.ozgym.tracker` |
+| Min. iOS | **15.5** (ML Kit) |
+| webDir | `dist` |
+| Package Manager | **CocoaPods** (SPM absichtlich nicht — ML Kit) |
+| Kamera | `NSCameraUsageDescription` in Info.plist |
+
+## Code-Pfade
+
+- `src/lib/nativePlatform.js` — `scanBarcodeNative()` / `canUseNativeBarcode()`
+- `src/lib/nativeApp.js` — StatusBar, Keyboard
+- `src/tabs/FoodTab.jsx` — `openScanner()` nutzt nativ, sonst Web
+- `ios/App/Podfile` — Capacitor + ML Kit Pods
+
+## Troubleshooting
+
+**„No such module Capacitor“**  
+→ Workspace öffnen (`App.xcworkspace`), nicht `App.xcodeproj`.  
+→ `cd ios/App && pod install`
+
+**Signing error**  
+→ Kostenloses Personal Team reicht zum Testen auf eigenem iPhone.
+
+**Scan startet nicht**  
+→ Einstellungen → OZGYM → Kamera an.  
+→ Deployment Target ≥ 15.5.
+
+**CocoaPods nicht gefunden**  
 ```bash
-npm run build
-npx cap copy ios    # nur Web-Assets kopieren
+sudo gem install cocoapods
+pod --version
 ```
 
-## Was passiert beim Scan?
+**Windows**  
+Nur Code/Sync möglich. **Build & Run nur auf dem Mac.**
 
-| Umgebung | Verhalten |
-|----------|-----------|
-| **Capacitor iOS-App** | Nativer ML-Kit-Scanner (fullscreen), dann Open Food Facts |
-| **Safari / PWA** | Web-Scanner (Foto-first), Fallback manuell |
+## Store / TestFlight (später)
 
-Code: `src/lib/nativePlatform.js` + `FoodTab` `openScanner`.
+1. Apple Developer Program  
+2. App-ID + Zertifikate in Xcode  
+3. Archive → Distribute → TestFlight  
 
-## Bundle-ID
+## Sicherheit / Privacy
 
-`app.ozgym.tracker` — in Xcode / Apple Developer anpassen, falls nötig.
-
-## CocoaPods (wichtig)
-
-`@capacitor-mlkit/barcode-scanning` **braucht CocoaPods**, nicht nur SPM.
-
-In `capacitor.config.json`:
-
-```json
-"ios": { "packageManager": "Cocoapods" }
-```
-
-Nach Plugin-Änderungen immer:
-
-```bash
-npx cap sync ios
-cd ios/App && pod install
-```
-
-## Bekannte Grenzen
-
-- Open Food Facts kann regional lückenhaft sein oder rate-limitten (429)  
-- Erste Xcode-Build dauert (Pods / ML Kit)  
-- Ohne Mac: native App nicht testbar; Web-PWA bleibt über Vercel
+Kamera nur für Barcode-Lebensmittel. Text für App Store Review steht in `Info.plist`.

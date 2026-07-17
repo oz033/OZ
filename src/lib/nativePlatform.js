@@ -21,6 +21,19 @@ export function getNativePlatform() {
   }
 }
 
+/** User hat Scan abgebrochen (kein Fehler) */
+export function isScanCancelled(err) {
+  const m = String(err?.message || err || "").toLowerCase();
+  return (
+    m.includes("cancel") ||
+    m.includes("abgebrochen") ||
+    m.includes("user canceled") ||
+    m.includes("user cancelled") ||
+    err?.code === "USER_CANCELED" ||
+    err?.code === "scanCanceled"
+  );
+}
+
 /**
  * Native ML-Kit-Scan (ready-to-use UI) — nur iOS/Android App.
  * @returns {Promise<string|null>} EAN/UPC-Ziffern oder null bei Abbruch
@@ -48,25 +61,28 @@ export async function scanBarcodeNative() {
     );
   }
 
-  // Ready-to-use Scanner (fullscreen, nativ — wie Store-Apps)
-  const { barcodes } = await BarcodeScanner.scan({
-    formats: [
-      BarcodeFormat.Ean13,
-      BarcodeFormat.Ean8,
-      BarcodeFormat.UpcA,
-      BarcodeFormat.UpcE,
-      BarcodeFormat.Code128,
-    ],
-    autoZoom: true,
-  });
+  try {
+    // Ready-to-use Scanner (fullscreen, nativ — wie Store-Apps)
+    const { barcodes } = await BarcodeScanner.scan({
+      formats: [
+        BarcodeFormat.Ean13,
+        BarcodeFormat.Ean8,
+        BarcodeFormat.UpcA,
+        BarcodeFormat.UpcE,
+        BarcodeFormat.Code128,
+      ],
+      autoZoom: true,
+    });
 
-  const raw =
-    barcodes?.[0]?.rawValue ||
-    barcodes?.[0]?.displayValue ||
-    "";
-  const code = String(raw).replace(/\D/g, "");
-  if (code.length < 8) return null;
-  return code;
+    const raw =
+      barcodes?.[0]?.rawValue || barcodes?.[0]?.displayValue || "";
+    const code = String(raw).replace(/\D/g, "");
+    if (code.length < 8) return null;
+    return code;
+  } catch (e) {
+    if (isScanCancelled(e)) return null;
+    throw e;
+  }
 }
 
 /** Ob nativer Scan sinnvoll ist (Capacitor iOS/Android) */
