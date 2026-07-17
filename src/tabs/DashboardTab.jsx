@@ -288,6 +288,23 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
         ? `${weekVol.vol} kg`
         : null;
 
+  /* Tease numbers when locked — widgets look filled, lightly blurred */
+  const teaseWeek = lockedStats ? "2/3" : null;
+  const teaseStreak = lockedStats ? 5 : null;
+  const teaseLevel = lockedStats ? 4 : null;
+  const teaseToday = lockedStats ? "6" : null;
+  const showWeekDays = lockedStats
+    ? weekDays.map((d, i) => ({
+        ...d,
+        trained: i < 3 && !d.future,
+        vol: i < 3 && !d.future ? 1200 + i * 400 : 0,
+      }))
+    : weekDays;
+  const showBarMax = lockedStats
+    ? Math.max(1, ...showWeekDays.map((d) => d.vol))
+    : weekBarMax;
+  const showPeak = lockedStats ? "4.2 t" : weekPeak;
+
   const startEditName = () => {
     setNameDraft(displayName);
     setEditingName(true);
@@ -499,15 +516,19 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
             </span>
             <span className="ig-home-mini-kicker">Diese Woche</span>
             <span className="ig-home-mini-num mono">
-              {stats.thisWeekDays >= weeklyGoal
-                ? "Ziel ✓"
-                : `${stats.thisWeekDays}/${weeklyGoal}`}
+              {teaseWeek
+                ? teaseWeek
+                : stats.thisWeekDays >= weeklyGoal
+                  ? "Ziel ✓"
+                  : `${stats.thisWeekDays}/${weeklyGoal}`}
             </span>
             <span className="ig-home-mini-meta mono">
-              {weekVol.vol >= 1000
-                ? `${round1(weekVol.vol / 1000)} t`
-                : `${weekVol.vol} kg`}{" "}
-              Volumen
+              {lockedStats
+                ? "3.1 t Volumen"
+                : weekVol.vol >= 1000
+                  ? `${round1(weekVol.vol / 1000)} t`
+                  : `${weekVol.vol} kg`}{" "}
+              {!lockedStats && "Volumen"}
             </span>
           </button>
           <button
@@ -521,11 +542,11 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
             </span>
             <span className="ig-home-mini-kicker">Serie</span>
             <span className="ig-home-mini-num mono">
-              <CountUp value={streak.streak} />
+              <CountUp value={teaseStreak ?? streak.streak} />
               <span className="ig-home-mini-unit"> Tage</span>
             </span>
             <span className="ig-home-mini-meta">
-              Best {streak.bestStreak || streak.streak}
+              Best {lockedStats ? 12 : streak.bestStreak || streak.streak}
             </span>
           </button>
           <button
@@ -538,10 +559,10 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
             </span>
             <span className="ig-home-mini-kicker">Level</span>
             <span className="ig-home-mini-num mono">
-              <CountUp value={stats.level} />
+              <CountUp value={teaseLevel ?? stats.level} />
             </span>
             <span className="ig-home-mini-meta mono">
-              {Math.round((stats.levelPct || 0) * 100)}% XP
+              {lockedStats ? "62% XP" : `${Math.round((stats.levelPct || 0) * 100)}% XP`}
             </span>
           </button>
           <button
@@ -554,18 +575,22 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
             </span>
             <span className="ig-home-mini-kicker">Heute</span>
             <span className="ig-home-mini-num mono">
-              {trainedToday
-                ? "✓"
-                : plan
-                  ? `${preview.length}`
-                  : "—"}
+              {teaseToday
+                ? teaseToday
+                : trainedToday
+                  ? "✓"
+                  : plan
+                    ? `${preview.length}`
+                    : "—"}
             </span>
             <span className="ig-home-mini-meta">
-              {trainedToday
-                ? "Erledigt"
-                : plan
-                  ? `Üb. · ≈ ${duration} Min`
-                  : "Kein Plan"}
+              {lockedStats
+                ? "Üb. · ≈ 45 Min"
+                : trainedToday
+                  ? "Erledigt"
+                  : plan
+                    ? `Üb. · ≈ ${duration} Min`
+                    : "Kein Plan"}
             </span>
           </button>
         </div>
@@ -586,20 +611,23 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
         <div className="ig-home-status-meta">
           <span className="ig-home-status-label">Diese Woche</span>
           <span className="ig-home-status-value mono">
-            {weekPeak || "0 kg"}
+            {showPeak || "0 kg"}
             <ChevronRight size={14} aria-hidden="true" />
           </span>
         </div>
-        <WeekStatusChart days={weekDays} peakLabel={weekPeak} />
+        <WeekStatusChart days={showWeekDays} peakLabel={showPeak} />
         <div className="ig-home-level" aria-label="Level-Fortschritt">
           <div className="ig-level-track sm">
             <div
               className="ig-level-fill"
-              style={{ width: `${Math.round((stats.levelPct || 0) * 100)}%` }}
+              style={{
+                width: `${lockedStats ? 62 : Math.round((stats.levelPct || 0) * 100)}%`,
+              }}
             />
           </div>
           <span className="ig-home-level-meta mono">
-            Lvl {stats.level} · {Math.round((stats.levelPct || 0) * 100)}%
+            Lvl {lockedStats ? 4 : stats.level} ·{" "}
+            {lockedStats ? 62 : Math.round((stats.levelPct || 0) * 100)}%
           </span>
         </div>
       </section>
@@ -609,11 +637,11 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
         <div className="ig-home-week-head">
           <span className="ig-field-label">Wochen-Tage</span>
           <span className="ig-home-week-meta mono">
-            {stats.thisWeekDays}/{weeklyGoal} Ziel
+            {lockedStats ? `2/${weeklyGoal}` : `${stats.thisWeekDays}/${weeklyGoal}`} Ziel
           </span>
         </div>
         <div className="ig-home-week-strip" role="list">
-          {weekDays.map((d) => (
+          {showWeekDays.map((d) => (
             <div
               key={d.key}
               role="listitem"
@@ -631,7 +659,7 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
                 className="ig-home-week-barlet"
                 style={{
                   height: d.vol
-                    ? `${Math.max(18, Math.round((d.vol / weekBarMax) * 36))}px`
+                    ? `${Math.max(18, Math.round((d.vol / showBarMax) * 36))}px`
                     : "4px",
                 }}
                 aria-hidden="true"
@@ -643,7 +671,10 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
           <div
             className="ig-home-week-fill"
             style={{
-              width: `${Math.min(100, (stats.thisWeekDays / weeklyGoal) * 100)}%`,
+              width: `${Math.min(
+                100,
+                ((lockedStats ? 2 : stats.thisWeekDays) / weeklyGoal) * 100,
+              )}%`,
             }}
           />
         </div>
