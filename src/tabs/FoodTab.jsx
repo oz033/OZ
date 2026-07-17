@@ -23,6 +23,7 @@ import {
   stopMediaStream,
   cameraErrorMessage,
 } from "../lib/camera.js";
+import { isIos } from "../lib/iosShell.js";
 import {
   fetchProductByBarcode,
   scalePer100,
@@ -134,16 +135,22 @@ export default function FoodTab({
   }, []);
 
   /**
-   * Kamera SOFORT im Klick anfordern — sonst blockiert iOS Safari/PWA.
-   * Auch wenn Kamera scheitert: Scanner öffnen (Foto + Manuell).
+   * iPhone Safari: kein Live-Stream — Foto über Systemkamera (einziger
+   * zuverlässige Web-Weg für EAN). Android: Stream im Klick holen.
    */
   const openScanner = useCallback(async () => {
     setScanCamError("");
-    // Vorherigen Stream freigeben
     setScanStream((prev) => {
       stopMediaStream(prev);
       return null;
     });
+
+    // iOS: Live-EAN im Safari-Web ist praktisch unbrauchbar
+    if (isIos()) {
+      setScanning(true);
+      return;
+    }
+
     try {
       const stream = await requestBarcodeCamera();
       setScanStream(stream);
@@ -152,7 +159,7 @@ export default function FoodTab({
       console.warn("[food] camera", e);
       setScanCamError(cameraErrorMessage(e));
       setScanStream(null);
-      setScanning(true); // Foto/Manuell trotzdem
+      setScanning(true);
       showToast(cameraErrorMessage(e), "info");
     }
   }, []);
@@ -1049,6 +1056,7 @@ export default function FoodTab({
           onClose={closeScanner}
           stream={scanStream}
           cameraError={scanCamError}
+          preferPhoto={isIos()}
         />
       ) : null}
     </div>
