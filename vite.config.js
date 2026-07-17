@@ -54,6 +54,9 @@ export default defineConfig({
     }),
   ],
   server: {
+    // Harness/CI kann via PORT-Env einen freien Port zuweisen (autoPort);
+    // ohne Env bleibt der gewohnte Vite-Default 5173.
+    port: Number(process.env.PORT) || 5173,
     headers: {
       "Cache-Control": "no-store",
     },

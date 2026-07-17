@@ -1573,6 +1573,26 @@ button.ig-wo-seg:active {
   font-size: 17px;
 }
 .ig-wo-hint.note { border-left: 3px solid var(--accent); color: var(--text); }
+/* Notiz auf der Karte ist antippbar: öffnet das Sheet + fokussiert das Feld */
+button.ig-wo-note-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out),
+    border-color var(--dur-med) var(--ease-out);
+}
+button.ig-wo-note-btn:hover { border-color: var(--accent); }
+button.ig-wo-note-btn:active { transform: scale(0.98); }
+button.ig-wo-note-btn svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--text-dim);
+}
+button.ig-wo-note-btn span { min-width: 0; }
 .ig-pe-note { background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 8px 10px; font-size: 12px; font-family: inherit; width: 100%; }
 .ig-pe-note:focus { outline: none; border-color: var(--accent); border-style: solid; }
 /* Empfehlungs-Chip im Bottom-Sheet */

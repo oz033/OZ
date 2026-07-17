@@ -27,6 +27,7 @@ import {
   Play,
   Pause,
   Search,
+  Pencil,
 } from "lucide-react";
 import { CountUp, RestRing, showConfirm } from "../components/ui.jsx";
 import { EclipseMark } from "../components/brand.jsx";
@@ -1663,6 +1664,19 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
     }
   }, [noteFocused, measureSheetExtras, springSheetTo]);
 
+  // Tap auf die Notiz-Zeile der Übungskarte → Sheet auf, Notiz-Feld fokussiert.
+  // Kurzer Delay: erst wenn das Sheet aufklappt, nimmt das Input den Fokus
+  // zuverlässig an (iOS öffnet dann auch die Tastatur).
+  const openNoteEditor = () => {
+    playSound("tap", soundOn);
+    setBottomCollapsed(false);
+    measureSheetExtras();
+    springSheetTo(1);
+    setTimeout(() => {
+      noteInputRef.current?.focus({ preventScroll: true });
+    }, 180);
+  };
+
   // Keep extras measured after paint; default collapsed on lift
   useLayoutEffect(() => {
     if (phase !== "lift") return;
@@ -2232,9 +2246,16 @@ export default function WorkoutMode({ data, update, queue, onExit, onFinish }) {
                       </button>
                     )}
                     {hasNote && (
-                      <p className="ig-wo-hint note">
-                        {shortTip(noteDraft, 80)}
-                      </p>
+                      <button
+                        type="button"
+                        className="ig-wo-hint note ig-wo-note-btn"
+                        data-no-swipe
+                        onClick={openNoteEditor}
+                        aria-label="Notiz bearbeiten"
+                      >
+                        <Pencil size={12} aria-hidden="true" />
+                        <span>{shortTip(noteDraft, 80)}</span>
+                      </button>
                     )}
                   </>
                 );
