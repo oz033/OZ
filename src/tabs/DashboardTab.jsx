@@ -11,8 +11,6 @@ import {
   Trophy,
   ChevronRight,
   Dumbbell,
-  ClipboardList,
-  ChartColumn,
   Bell,
   Pencil,
 } from "lucide-react";
@@ -224,78 +222,7 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
   const secondsToday = todaySessions.reduce((a, x) => a + (x.seconds || 0), 0);
   const kcalToday = estimateKcal(secondsToday, currentWeightKg(data.profile));
 
-  /* —— First launch: structured empty, not a blank void —— */
-  if (stats.totalWorkouts === 0) {
-    return (
-      <div className="ig-tabpane ig-home ig-home-onboarding ig-home-immersive">
-        <div className="ig-home-hero">
-          <span className="ig-home-eyebrow mono">{weekday} · Start</span>
-          <h1 className="ig-home-title">{hiTitle}</h1>
-        </div>
-
-        <div className="ig-card ig-home-steps" aria-label="Erste Schritte">
-          <div className="ig-home-step">
-            <span className="ig-home-step-num mono">1</span>
-            <div>
-              <strong>Plan wählen</strong>
-              <p>Vorlage oder eigener Split</p>
-            </div>
-          </div>
-          <div className="ig-home-step">
-            <span className="ig-home-step-num mono">2</span>
-            <div>
-              <strong>Workout starten</strong>
-              <p>Sätze loggen, Pause, fertig</p>
-            </div>
-          </div>
-          <div className="ig-home-step">
-            <span className="ig-home-step-num mono">3</span>
-            <div>
-              <strong>Serie aufbauen</strong>
-              <p>Verlauf & Level wachsen mit</p>
-            </div>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="ig-btn-primary wide xl ig-home-cta"
-          onClick={() => (plan ? onStart() : goTo("plan"))}
-        >
-          <Play size={20} aria-hidden="true" />
-          {plan ? "Erstes Workout starten" : "Plan anlegen"}
-        </button>
-        {plan && (
-          <button
-            type="button"
-            className="ig-btn-primary wide ghosted"
-            onClick={() => goTo("plan")}
-          >
-            Plan ansehen
-          </button>
-        )}
-
-        {plan && preview.length > 0 && (
-          <div className="ig-card ig-today-card">
-            <div className="ig-field-label">{plan.name} · Vorschau</div>
-            <ol className="ig-today-plan">
-              {preview.slice(0, 5).map((it, i) => (
-                <li key={it.exerciseId + i}>
-                  <span className="ig-today-plan-num mono">{i + 1}</span>
-                  <span className="ig-today-plan-name">
-                    {planByIdName[it.exerciseId] || "?"}
-                  </span>
-                  <span className="ig-today-plan-meta mono">
-                    {it.sets}×{it.reps}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
-      </div>
-    );
-  }
+  const lockedStats = stats.totalWorkouts === 0;
 
   /* —— Status copy —— */
   let eyebrow = displayName ? `Welcome back` : `${weekday} · Heute`;
@@ -470,73 +397,84 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
         </div>
       </header>
 
-      {/* FitPal pill chips — quick surfaces */}
-      <nav className="ig-home-chips" aria-label="Schnellzugriff">
-        <button type="button" className="ig-chip active" aria-current="page">
-          <Dumbbell size={14} aria-hidden="true" /> Heute
-        </button>
-        <button type="button" className="ig-chip" onClick={() => goTo("plan")}>
-          <ClipboardList size={14} aria-hidden="true" /> Plan
-        </button>
-        <button type="button" className="ig-chip" onClick={() => goTo("progress")}>
-          <ChartColumn size={14} aria-hidden="true" /> Verlauf
-        </button>
-        <button
-          type="button"
-          className="ig-chip"
-          onClick={() => setShowCal((s) => !s)}
-          aria-expanded={showCal}
-        >
-          <Flame size={14} aria-hidden="true" /> Serie {streak.streak || 0}
-        </button>
-      </nav>
-
-      {/* Primary CTA — full lime pill */}
-      {!restDay && !trainedToday && plan && (
+      {/* Primary CTA — always clear; stats lock until first workout */}
+      {lockedStats ? (
         <button
           type="button"
           className="ig-btn-primary wide xl ig-home-cta ig-home-cta-glow"
-          onClick={() => onStart()}
+          onClick={() => (plan ? onStart() : goTo("plan"))}
         >
-          <Play size={20} aria-hidden="true" /> Workout starten
+          <Play size={20} aria-hidden="true" />
+          {plan ? "Erstes Workout starten" : "Plan anlegen"}
         </button>
+      ) : (
+        <>
+          {!restDay && !trainedToday && plan && (
+            <button
+              type="button"
+              className="ig-btn-primary wide xl ig-home-cta ig-home-cta-glow"
+              onClick={() => onStart()}
+            >
+              <Play size={20} aria-hidden="true" /> Workout starten
+            </button>
+          )}
+          {restDay && plan && !trainedToday && (
+            <button
+              type="button"
+              className="ig-btn-primary wide ghosted ig-home-cta"
+              onClick={() => onStart()}
+            >
+              <Play size={16} aria-hidden="true" /> Trotzdem {plan.name} starten
+            </button>
+          )}
+          {!plan && !trainedToday && (
+            <button
+              type="button"
+              className="ig-btn-primary wide ghosted ig-home-cta"
+              onClick={() => goTo("plan")}
+            >
+              Plan öffnen
+            </button>
+          )}
+          {trainedToday && (
+            <div className="ig-home-cta-row">
+              <button
+                type="button"
+                className="ig-btn-primary wide ghosted ig-home-share"
+                onClick={shareToday}
+              >
+                <Share2 size={18} aria-hidden="true" /> Teilen
+              </button>
+              <button
+                type="button"
+                className="ig-btn-primary wide ghosted"
+                onClick={() => goTo("progress")}
+              >
+                Verlauf
+              </button>
+            </div>
+          )}
+        </>
       )}
-      {restDay && plan && !trainedToday && (
-        <button
-          type="button"
-          className="ig-btn-primary wide ghosted ig-home-cta"
-          onClick={() => onStart()}
+
+      {/* Stats stack — blurred until first completed workout */}
+      <div
+        className={
+          "ig-home-stats-stack" + (lockedStats ? " is-locked" : "")
+        }
+      >
+        {lockedStats && (
+          <div className="ig-home-lock-overlay" aria-hidden="true">
+            <span className="ig-home-lock-msg">
+              Nach dem ersten Workout freigeschaltet
+            </span>
+          </div>
+        )}
+        <div
+          className="ig-home-stats-inner"
+          inert={lockedStats ? "" : undefined}
+          aria-hidden={lockedStats || undefined}
         >
-          <Play size={16} aria-hidden="true" /> Trotzdem {plan.name} starten
-        </button>
-      )}
-      {!plan && !trainedToday && (
-        <button
-          type="button"
-          className="ig-btn-primary wide ghosted ig-home-cta"
-          onClick={() => goTo("plan")}
-        >
-          Plan öffnen
-        </button>
-      )}
-      {trainedToday && (
-        <div className="ig-home-cta-row">
-          <button
-            type="button"
-            className="ig-btn-primary wide ghosted ig-home-share"
-            onClick={shareToday}
-          >
-            <Share2 size={18} aria-hidden="true" /> Teilen
-          </button>
-          <button
-            type="button"
-            className="ig-btn-primary wide ghosted"
-            onClick={() => goTo("progress")}
-          >
-            Verlauf
-          </button>
-        </div>
-      )}
 
       {/* Summary Activity — 2 mini cards (FitPal “Summary Activity”) */}
       <section className="ig-home-summary" aria-label="Übersicht">
@@ -874,7 +812,10 @@ export default function DashboardTab({ data, update, goTo, onStart }) {
         )}
       </div>
 
-      {showCal && (
+        </div>{/* .ig-home-stats-inner */}
+      </div>{/* .ig-home-stats-stack */}
+
+      {showCal && !lockedStats && (
         <StreakCalendar
           logs={data.logs}
           today={today}
