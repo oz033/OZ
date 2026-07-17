@@ -23,13 +23,9 @@ export default function ProfileTab({ data, update, goTo }) {
 
   const [height, setHeight] = useState(profile.heightCm || "");
   const [weight, setWeight] = useState(profile.weightKg || "");
-  const [displayName, setDisplayName] = useState(profile.displayName || "");
   const [showStudio, setShowStudio] = useState(false);
   const fileInputRef = useRef(null);
-
-  useEffect(() => {
-    setDisplayName(profile.displayName || "");
-  }, [profile.displayName]);
+  const displayName = String(profile.displayName || "").trim();
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -63,17 +59,6 @@ export default function ProfileTab({ data, update, goTo }) {
       ...prev,
       settings: { ...(prev?.settings || {}), ...fields },
     }));
-
-  // Debounce display name
-  useEffect(() => {
-    const t = setTimeout(() => {
-      const next = displayName.trim().slice(0, 32);
-      if (next === (profile.displayName || "")) return;
-      patchProfile({ displayName: next });
-    }, 400);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayName]);
 
   const gender = profile.gender;
   const h = Number(height) / 100;
@@ -171,8 +156,10 @@ export default function ProfileTab({ data, update, goTo }) {
             <span className="ig-identity-tag">
               {gender === "f" ? "Frauen-Modus" : gender === "m" ? "Männer-Modus" : "Profil"}
             </span>
-            <h2>{displayName.trim() || APP_NAME}</h2>
-            <span className="ig-identity-sub">{APP_NAME}</span>
+            <h2>{displayName || APP_NAME}</h2>
+            <span className="ig-identity-sub">
+              {displayName ? "Name auf Home tippen zum Ändern" : APP_NAME}
+            </span>
           </div>
         </div>
         <div className="ig-identity-level">
@@ -188,26 +175,6 @@ export default function ProfileTab({ data, update, goTo }) {
           <span>{earnedBadges} von {BADGE_DEFS.length} Abzeichen freigeschaltet</span>
           <ChevronRight size={15} />
         </button>
-      </div>
-
-      {/* Dein Name */}
-      <div className="ig-card">
-        <div className="ig-field-label">Dein Name</div>
-        <label className="ig-num-field">
-          <span>Anzeigename</span>
-          <input
-            type="text"
-            className="ig-input"
-            maxLength={32}
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="z. B. Alex"
-            autoComplete="given-name"
-          />
-        </label>
-        <p className="ig-plan-text" style={{ marginTop: 8 }}>
-          Erscheint als Begrüßung auf dem Home-Screen.
-        </p>
       </div>
 
       {/* Persönliches: Modus + Alter */}

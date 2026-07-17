@@ -14,6 +14,7 @@ import {
   ClipboardList,
   ChartColumn,
   Bell,
+  Pencil,
 } from "lucide-react";
 import { CountUp, showToast } from "../components/ui.jsx";
 import { OzGymMark } from "../components/brand.jsx";
@@ -148,9 +149,11 @@ function weekVolumeKg(dayVolumes, today) {
   return { vol: Math.round(vol), days };
 }
 
-export default function DashboardTab({ data, update: _update, goTo, onStart }) {
+export default function DashboardTab({ data, update, goTo, onStart }) {
   const [showCal, setShowCal] = useState(false);
   const [titleCompact, setTitleCompact] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
 
   useEffect(() => {
     const main = document.querySelector(".ig-main");
@@ -361,6 +364,25 @@ export default function DashboardTab({ data, update: _update, goTo, onStart }) {
         ? `${weekVol.vol} kg`
         : null;
 
+  const startEditName = () => {
+    setNameDraft(displayName);
+    setEditingName(true);
+  };
+
+  const saveName = () => {
+    const next = nameDraft.trim().slice(0, 32);
+    setEditingName(false);
+    if (next === displayName) return;
+    update((prev) => ({
+      ...prev,
+      profile: { ...(prev.profile || {}), displayName: next },
+    }));
+    if (next) showToast(`Hallo, ${next}`, "info");
+  };
+
+  // Greeting line always shows name (editable); plan/status stays in title
+  const nameLabel = displayName || "Name tippen";
+
   return (
     <div
       className={
@@ -377,8 +399,52 @@ export default function DashboardTab({ data, update: _update, goTo, onStart }) {
           </span>
           <div className="ig-home-welcome-text">
             <span className="ig-home-welcome-kicker">{eyebrow}</span>
-            <h1 className="ig-home-welcome-title">{title}</h1>
-            <p className="ig-home-welcome-sub">{sub}</p>
+            {editingName ? (
+              <form
+                className="ig-home-name-edit"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  saveName();
+                }}
+              >
+                <input
+                  className="ig-home-name-input"
+                  type="text"
+                  maxLength={32}
+                  autoFocus
+                  autoComplete="given-name"
+                  placeholder="Dein Name"
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onBlur={saveName}
+                  aria-label="Anzeigename"
+                />
+              </form>
+            ) : (
+              <button
+                type="button"
+                className="ig-home-name-btn"
+                onClick={startEditName}
+                aria-label="Name ändern"
+              >
+                <h1 className="ig-home-welcome-title">
+                  {displayName ? (
+                    <>
+                      Hi, <span className="ig-home-name-value">{displayName}</span>
+                    </>
+                  ) : (
+                    <span className="ig-home-name-placeholder">{nameLabel}</span>
+                  )}
+                </h1>
+                <Pencil size={14} className="ig-home-name-pencil" aria-hidden="true" />
+              </button>
+            )}
+            {/* Status / plan line under name */}
+            <p className="ig-home-welcome-sub">
+              {title !== hiTitle && title !== timeHello && !trainedToday && !restDay
+                ? `${title} · ${sub}`
+                : sub}
+            </p>
           </div>
         </div>
         <div className="ig-home-welcome-actions">

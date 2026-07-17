@@ -5017,6 +5017,70 @@ button.ig-ex-stat-btn:active { transform: scale(0.985); }
   color: var(--text);
   overflow-wrap: anywhere;
 }
+.ig-home-name-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  border-radius: 8px;
+}
+.ig-home-name-btn:active {
+  opacity: 0.85;
+}
+.ig-home-name-btn .ig-home-welcome-title {
+  flex: 1;
+  min-width: 0;
+}
+.ig-home-name-value {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  text-underline-offset: 3px;
+}
+.ig-home-name-placeholder {
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 22px;
+}
+.ig-home-name-pencil {
+  flex-shrink: 0;
+  color: var(--text-dim);
+  opacity: 0.75;
+}
+.ig-home-name-btn:hover .ig-home-name-pencil,
+.ig-home-name-btn:focus-visible .ig-home-name-pencil {
+  color: var(--accent);
+  opacity: 1;
+}
+.ig-home-name-edit {
+  width: 100%;
+  margin: 0;
+}
+.ig-home-name-input {
+  width: 100%;
+  max-width: 16rem;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--accent);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
 .ig-home-welcome-sub {
   margin: 2px 0 0;
   font-size: 13px;
